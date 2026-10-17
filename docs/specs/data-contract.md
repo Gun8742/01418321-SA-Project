@@ -66,7 +66,7 @@ Detail DTO ไม่จำเป็นต้องส่ง fields ทั้ง�
 
 ## Input groups และ Referential rules
 
-WorkerEmploymentDraft ใช้ fields ตาม [Frontend](frontend/README.md); create เชื่อม existing worker ที่มีสิทธิ์หรือสร้างใหม่ตาม duplicate policy O-06
+WorkerEmploymentDraft ใช้ fields ตาม [Frontend Forms](frontend/forms.md); create เชื่อม existing worker ที่มีสิทธิ์หรือสร้างใหม่ตาม duplicate policy O-06
 การแก้ Employment เดิมต้องส่ง workerId และ employmentId คู่ที่ระบุใน URL; ไม่อนุญาตเปลี่ยนคู่ความสัมพันธ์ผ่าน draft หรือเลือกการจ้างล่าสุดโดย implicit
 PreparationInput: documentSetId หรือ new employmentId/type/caseKey, fields ที่ whitelist ตามประเภท, linked documentIds
 SubmissionInput: applicationId หรือ documentSetId, authority/submittedAt/receiptNo/acceptedEvidenceDocumentIds

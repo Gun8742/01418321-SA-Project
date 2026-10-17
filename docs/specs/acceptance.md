@@ -54,4 +54,5 @@ End-to-end: Employer UC-04→01→05→06→11, Worker 07→08→09, Employer 02
 ก่อนส่งมอบ: รัน formatter/lint/typecheck/unit/integration/e2e/build ที่ติดตั้งจริง และบันทึกผล/ข้อจำกัด; ไม่มี scripts ไม่ถือว่าผ่าน
 PR ชุดนี้ตรวจเฉพาะความครบ/links/source fingerprints ของ Spec; ไม่ได้พิสูจน์ runtime ตามเกณฑ์ข้างต้น
 
+ตรวจ Frontend เพิ่มตาม [Frontend Verification](frontend/verification.md) ซึ่งจับคู่ Routes, Forms, UI States และ Components กับ Acceptance IDs ข้างต้น
 ตรวจ Backend เพิ่มตาม [Backend Verification](backend/verification.md) ซึ่งจับคู่ BE-UC01–BE-UC11 และ scope/transaction/replay/storage/concurrency cases กับ Class Diagram/operations
