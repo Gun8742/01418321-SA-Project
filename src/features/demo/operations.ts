@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { emptyStage } from "./fixtures";
+import { businessDate } from "../../lib/date";
 import {
   dateSchema, employmentFieldsSchema, idSchema, kindSchema, noteSchema, profileSchema, requiredText, targetSchema,
   type Actor, type CaseKind, type DemoData, type Employment, type OperationName, type OperationResult, type Stage,
@@ -157,7 +158,7 @@ function confirmReceipt(data:DemoData,actor:Actor,raw:unknown) {
   const doc=data.documents.find(d=>d.id===input.documentId);requireRule(doc,"ไม่พบเอกสาร","NOT_FOUND");scopedEmployment(data,actor,doc.employmentId);
   requireRule(doc.workerId=== (actor.role==="WORKER"?actor.workerId:"")&&["VISA","WORK_PERMIT"].includes(doc.type),"ไม่มีสิทธิ์รับเอกสารนี้","FORBIDDEN");
   requireRule(data.stages.some(s=>s.application.issuedDocumentId===doc.id&&s.application.decisionStatus==="APPROVED"),"ยังไม่มีผลอนุมัติหรือเอกสารพร้อมรับ");
-  requireRule(input.receivedAt<=new Date().toISOString().slice(0,10),"วันที่รับต้องไม่อยู่ในอนาคต");
+  requireRule(input.receivedAt<=businessDate(),"วันที่รับต้องไม่อยู่ในอนาคต");
   if(doc.receivedAt) { requireRule(doc.receivedAt===input.receivedAt&&doc.receivedChannel===input.channel,"มีการยืนยันการรับแล้ว","CONFLICT");return doc.id; }
   doc.receivedAt=input.receivedAt;doc.receivedChannel=input.channel;return doc.id;
 }

@@ -50,7 +50,7 @@ export function OperationForm({fields,submitLabel="บันทึกข้อ�
     const submitter=event.nativeEvent instanceof SubmitEvent?event.nativeEvent.submitter:null;
     const mode=submitter instanceof HTMLButtonElement?submitter.value:"SAVE";
     const nextErrors:Record<string,string[]>={};
-    for(const field of fields)if(field.required&&!values[field.name]?.trim())nextErrors[field.name]=["กรุณาระบุ"+field.label.replace(" *","")];
+    for(const field of fields)if(mode!=="DRAFT"&&field.required&&!values[field.name]?.trim())nextErrors[field.name]=["กรุณาระบุ"+field.label.replace(" *","")];
     if(Object.keys(nextErrors).length){setErrors(nextErrors);setFeedback({message:"กรุณาตรวจช่องที่จำเป็นก่อนบันทึก",error:true});return;}
     const result=await onSave(values,mode);
     if(!result.ok) {setErrors(result.error.fieldErrors??{});setFeedback({message:result.error.message,error:true});return;}

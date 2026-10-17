@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useDemo } from "@/features/demo/context";
 import { Banner } from "@/components/ui/primitives";
@@ -39,7 +39,7 @@ function DemoTools() {
   </div></details>;
 }
 export function AppFrame({area,children}:{area:"EMPLOYER"|"WORKER";children:ReactNode}) {
-  const demo=useDemo();const pathname=usePathname();const router=useRouter();
+  const demo=useDemo();const pathname=usePathname();const router=useRouter();const search=useSearchParams();
   useEffect(()=>{if(demo.ready&&!demo.actor)router.replace("/login");},[demo.ready,demo.actor,router]);
   if(!demo.ready)return <main className="standalone" role="status">กำลังโหลดข้อมูลสมมติ…</main>;
   if(!demo.actor)return <main className="standalone"><Link href="/login">เลือกบัญชีสาธิตก่อน</Link></main>;
@@ -52,7 +52,8 @@ export function AppFrame({area,children}:{area:"EMPLOYER"|"WORKER";children:Reac
     <aside className="sidebar"><Link className="brand" href={nav[0].href}>SA / WORKFORCE</Link><p>ระบบจัดการเอกสาร<br/>แรงงานต่างด้าว</p><span className="badge">{area==="EMPLOYER"?"นายจ้าง / ผู้แทน":"ลูกจ้างต่างด้าว"}</span>
       <nav aria-label="เมนูหลัก">{nav.map(item=>{
         const active=item.href===pathname||(item.href!=="/worker"&&pathname.startsWith(item.href+"/")&&!pathname.endsWith("/applications")&&!item.href.endsWith("/applications"));
-        return <Link key={item.href} className="nav-link" href={item.href} aria-current={active?"page":undefined}><img src={"/icons/"+(active?item.dark:item.light)} alt="" width={20} height={20}/><span>{item.label}</span></Link>;
+        const href=area==="WORKER"&&search.get("employmentId")?item.href+"?employmentId="+encodeURIComponent(search.get("employmentId")??""):item.href;
+        return <Link key={item.href} className="nav-link" href={href} aria-current={active?"page":undefined}><img src={"/icons/"+(active?item.dark:item.light)} alt="" width={20} height={20}/><span>{item.label}</span></Link>;
       })}</nav>
       <footer><p>ข้อมูลตัวอย่างสมมติ<br/>MOCK FRONTEND</p><button className="button secondary" onClick={logout}>ออกจากระบบสาธิต</button></footer>
     </aside>
