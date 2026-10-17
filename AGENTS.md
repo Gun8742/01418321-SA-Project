@@ -11,8 +11,10 @@
 
 ## Current State and Stack
 
-Repository นี้เริ่มต้นจาก README และเอกสารกำกับ ยังไม่มี application scaffold หรือคำสั่ง build/test ที่ยืนยันแล้ว ณ วันที่ 17 ตุลาคม 2569
+Repository นี้มีโครงสร้าง Directory และเอกสาร Architecture แล้ว แต่ยังไม่มี application implementation, dependencies หรือคำสั่ง build/test ที่ยืนยันแล้ว ณ วันที่ 17 ตุลาคม 2569
 เมื่อลงมือทำงานครั้งถัดไป ให้ตรวจ manifests, lockfiles และ scripts จริงก่อนใช้คำสั่งหรือเลือก dependency
+
+ก่อนเพิ่ม Feature, Route หรือ Infrastructure ให้อ่าน [Architecture](docs/architecture.md); ก่อนทำ Use Case ให้ดู [Use Case Map](docs/use-case-map.md) เพื่อเลือก Module และหน้าจอที่เกี่ยวข้อง
 
 Stack ที่เสนอไว้สำหรับเริ่มพัฒนา ยังไม่ใช่สิ่งที่ติดตั้งหรือยืนยันแล้ว:
 
