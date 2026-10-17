@@ -1,7 +1,7 @@
 # Frontend specification
 
-สถานะ: Proposed implementation; business gates อ้าง [Workflow](workflows.md), สิทธิ์อ้าง [Authorization](authorization.md)
-Desktop Web 1440 px ตาม Figma; screen IDs อ้าง [Use Case Map](../use-case-map.md) ไม่ใช่ข้อบังคับหนึ่ง URL ต่อหนึ่ง frame
+สถานะ: Proposed implementation; business gates อ้าง [Workflow](../workflows.md), สิทธิ์อ้าง [Authorization](../authorization.md)
+Desktop Web 1440 px ตาม Figma; screen IDs อ้าง [Use Case Map](../../use-case-map.md) ไม่ใช่ข้อบังคับหนึ่ง URL ต่อหนึ่ง frame
 
 ## Route และพฤติกรรม
 
@@ -71,7 +71,7 @@ Resolve สำเร็จจึงเป็น RESOLVED และแสดง�
 | Correction | targetType, targetId, reason, evidenceDocumentIds | required reason; targetType เป็น VISA/ENTRY/WORK_PERMIT ตาม Contract; ตรวจสิทธิ์ไฟล์และ target |
 | Resolve correction | correctionId, resolution, expectedVersion, requestId | resolution required; OPEN และมีสิทธิ์จึงปิดได้; ไม่ส่ง target ใหม่หรือเปลี่ยนสถานะเอง |
 
-วันที่แสดงไทยได้ แต่ส่ง ISO Gregorian ตาม [Data Contract](data-contract.md); ไม่แปลง พ.ศ. ซ้ำตอนบันทึก
+วันที่แสดงไทยได้ แต่ส่ง ISO Gregorian ตาม [Data Contract](../data-contract.md); ไม่แปลง พ.ศ. ซ้ำตอนบันทึก
 ข้อเสนอ limit: search 100 characters, ชื่อ/หัวข้อ 200, reason/note 2,000; backend ใช้ชุดเดียวกันและเคารพขนาดคอลัมน์ที่จะอนุมัติ
 
 ## Components และ State
@@ -97,7 +97,7 @@ Health visit ที่มีผล/ใบรับรองแล้วแสด
 
 ## Mock และ integration seam
 
-Frontend ใช้ operation interfaces ตาม [Backend](backend.md) และ DTO ตาม [Data Contract](data-contract.md)
+Frontend ใช้ operation interfaces ตาม [Backend](../backend.md) และ DTO ตาม [Data Contract](../data-contract.md)
 Mock adapter และ Server adapter ให้ผล success/error shape เดียวกัน; mock role switch จำกัด demo build และติดป้าย “ข้อมูลสมมติ / จำลองการทำงาน”
 ห้ามนำ mock adapter, fake login หรือ role override เปิดใน production
 Fixture ต้องครอบคลุมงานครบ/ไม่ครบ/ขอเพิ่ม/ไม่อนุมัติ/พร้อมรับ/รับแล้ว และ failure; ห้ามมี PII จริง

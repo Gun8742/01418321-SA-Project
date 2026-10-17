@@ -8,7 +8,7 @@
 | งานที่จะทำ | เอกสาร |
 |---|---|
 | เข้าใจเป้าหมาย ขอบเขต และข้อมูลต้นทาง | [Product](product.md) |
-| ทำ Routes, Forms, UI states และ Mock | [Frontend](frontend.md) |
+| ทำ Routes, Forms, UI states และ Mock | [Frontend](frontend/README.md) |
 | ทำ Operations, transactions และ file lifecycle | [Backend](backend.md) และ [Backend ฉบับละเอียด](backend/README.md) |
 | กำหนด payload ที่ FE/BE ใช้ร่วมกัน | [Data Contract](data-contract.md) และ [ตัวอย่าง JSON](examples.json) |
 | กำหนด transition และเงื่อนไขเปิดขั้นตอน | [Workflows](workflows.md) |

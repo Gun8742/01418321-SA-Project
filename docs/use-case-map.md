@@ -26,8 +26,8 @@
 - `/worker`: W01 ภาพรวมของตนเอง อ่านสถานะจาก Modules ที่เกี่ยวข้อง
 - S02: ไม่มีสิทธิ์; S03/S03S/S04: ดู/ดาวน์โหลดและผลลัพธ์; S05: ข้อความบันทึกสำเร็จ
 - W10/W10S: แจ้งข้อมูลไม่ตรง ให้เข้าจากบริบท Visa, Travel หรือ Work Permit โดยไม่ถือเป็นการแก้เอกสารต้นฉบับ
-- Employer ใช้ Tab คำแจ้งใน E15 ของ Employment ที่เลือกเพื่ออ่าน/ตอบและปิดเรื่อง; เป็น Proposed UI เพิ่ม ยังไม่มี frame เฉพาะใน Figma ดู [Frontend Spec](specs/frontend.md)
-- Worker detail/edit ใช้บริบทคู่ workerId + employmentId; หน้า Worker ระดับบนเป็น selector การจ้าง ไม่เลือกประวัติล่าสุดเอง ดู canonical routes ใน [Frontend Spec](specs/frontend.md)
+- Employer ใช้ Tab คำแจ้งใน E15 ของ Employment ที่เลือกเพื่ออ่าน/ตอบและปิดเรื่อง; เป็น Proposed UI เพิ่ม ยังไม่มี frame เฉพาะใน Figma ดู [Frontend Spec](specs/frontend/README.md)
+- Worker detail/edit ใช้บริบทคู่ workerId + employmentId; หน้า Worker ระดับบนเป็น selector การจ้าง ไม่เลือกประวัติล่าสุดเอง ดู canonical routes ใน [Frontend Spec](specs/frontend/README.md)
 
 หมายเลขหน้าจอและสถานะตัวอย่างไม่ได้บังคับให้สร้าง URL แยกหนึ่ง route ต่อหนึ่ง frame
 ใช้ page, tab หรือ inline state ตามงานจริง พร้อมรักษา Precondition ของ UC และแยกข้อมูลตามสิทธิ์
