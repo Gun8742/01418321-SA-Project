@@ -35,6 +35,11 @@ Business tests ใช้ synthetic data และแยก mock demo จาก i
 | AC-FILE-01 | ไฟล์เกิน 5 MiB, MIME spoof, executable, foreign uploadId ถูกปฏิเสธ; cleanup ไม่ลบไฟล์ที่มี reference |
 | AC-FILE-02 | signed URL หมดอายุ/ไม่มีสิทธิ์โหลดไม่ได้; storage key/token ไม่อยู่ใน DTO/log; download failure ไม่ขึ้นสำเร็จ |
 | AC-CORRECTION-01 | Worker แจ้งข้อมูลไม่ตรง; Employer scope ที่เกี่ยวข้องแก้/resolve พร้อมเหตุผล; คนอื่น resolve ไม่ได้; ไม่แก้ issued record เงียบ ๆ |
+| AC-CORRECTION-02 | W10 ส่ง targetType/targetId/reason/evidenceDocumentIds และ requestId ตรง CorrectionInput; payload ที่ใช้ resourceType/resourceId ถูก reject ด้วย VALIDATION_ERROR; VISA/WORK_PERMIT อ้าง Document, ENTRY อ้าง EntryRecord ตรงประเภท |
+| AC-CORRECTION-03 | Worker แจ้ง → Employer เห็นใน E15 Tab คำแจ้งของการจ้างนั้น → เปิดอ่านหลักฐาน → กรอก resolution → resolveCorrection → Worker เห็น RESOLVED/คำตอบ/ผู้ตอบ/เวลาในหน้าต้นทาง; นอก scope มองไม่เห็น |
+| AC-CORRECTION-04 | resolution ว่าง, บันทึกล้มเหลว หรือ stale version ไม่ปิดเรื่อง; คงข้อความให้แก้/reload; RESOLVED เป็น read-only และไม่ overwrite คำตอบด้วย request ใหม่ |
+| AC-EMPLOYMENT-01 | Worker มีสอง Employment ใน Employer เดียวกัน; เลือกแต่ละรายการแล้ว URL/detail/edit/ชุดเอกสาร/คำขอ/save ตรง employmentId; refresh/deep link คงบริบทเดิม ไม่มี auto-select latest |
+| AC-EMPLOYMENT-02 | workerId/employmentId ไม่เป็นคู่หรือการจ้างอยู่กับ Employer อื่น → NOT_FOUND ไม่ fallback; ไม่มี employmentId เปิด selector ก่อนแก้; สลับการจ้างขณะมี draft ต้องยืนยันและไม่ส่ง draft ข้ามบริบท |
 | AC-DATA-01 | BIGINT ไม่เสีย precision; string เลขศูนย์นำหน้าคงเดิม; Gregorian/พ.ศ./timezone round-trip ไม่เลื่อนวัน; nullable event ไม่มีวันปลอม |
 | AC-UI-01 | ทุก route มี loading/empty/error/retry; Thai ยาว/filename ไม่ล้นที่ 1440/1024/390; keyboard/focus/contrast ผ่าน target |
 | AC-DEMO-01 | demo ติดป้ายข้อมูลสมมติ, การยื่น/อนุมัติ/เดินทาง/ตรวจแพทย์ภายนอก; fake role/auth/download ไม่หลุด production |

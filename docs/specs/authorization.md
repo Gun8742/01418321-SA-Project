@@ -23,7 +23,7 @@
 | Visa / Work Permit receipt | อ่านผลของ Employment ตน | ยืนยันรับเอกสารตนเมื่อ gate ผ่าน |
 | Travel plan / Health visit | อ่านในขอบเขตนายจ้างตน | บันทึกข้อมูลของตนเมื่อ gate ผ่าน |
 | Entry decision / Health result / Certificate confirmation | ต้องมี grant เฉพาะ Worker/Employment | ต้องมี grant เฉพาะ Worker/Employment ไม่ได้มาจากการเป็นเจ้าของอย่างเดียว |
-| CorrectionRequest | อ่าน/แก้ข้อมูลที่ตนเป็นผู้รับผิดชอบและมีสิทธิ์เดิม | สร้างและดูคำแจ้งของตน; ไม่แก้ผลต้นฉบับ |
+| CorrectionRequest | list/detail/resolve เฉพาะ Employment ตน; resolution ไม่ให้สิทธิ์แก้ผลภายนอกเพิ่ม | สร้างและดูคำแจ้งของตน รวม resolution/ผู้ตอบ/เวลา; ไม่แก้ผลต้นฉบับ |
 | Download / upload commit | ตรวจ owner, Employment และ document purpose | ตรวจ owner/context และรูปแบบไฟล์; company file ต้องมีการแชร์เฉพาะ |
 
 การเข้าถึงลูกจ้างผ่าน Employment หนึ่งไม่ให้สิทธิ์เข้าถึง Employment ของนายจ้างอื่นหรือเอกสารทุกชิ้นของลูกจ้างคนนั้น
