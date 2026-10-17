@@ -1,0 +1,127 @@
+{
+  "capturedAt": "2026-10-17",
+  "externalRootFromRepository": "../..",
+  "files": [
+    {
+      "path": "Use case description - revised UC01-UC11.docx",
+      "sha256": "55001228d74a0a9bc8a87e3c275bcbbf32c1fe9cb92721d7eaa89d3c6eb88ee2"
+    },
+    {
+      "path": "Sequence Diagrams/README.txt",
+      "sha256": "3dcb2d1581fd38f2ac0b8834f71452dd00dad19b7a4ee06eeb14d8be6a8fc36a"
+    },
+    {
+      "path": "Sequence Diagrams/UC-01.txt",
+      "sha256": "8e55f25c74e6b01e887253622253178f50a9ac56c8a16161f6d9467224bbd7fa"
+    },
+    {
+      "path": "Sequence Diagrams/UC-02.txt",
+      "sha256": "609078bdeb93c8e245b62cfccde8f66700de8c51309ef931cc8de61a9d09059f"
+    },
+    {
+      "path": "Sequence Diagrams/UC-03.txt",
+      "sha256": "d6bea384757ee1ec2f84ac7b22291c65701fca6788453956aa3581b3333ccaf6"
+    },
+    {
+      "path": "Sequence Diagrams/UC-04.txt",
+      "sha256": "cdbc26be16552ed7202fb265759212b67413f65391d94ed34634b378d0455bbb"
+    },
+    {
+      "path": "Sequence Diagrams/UC-05.txt",
+      "sha256": "996288bbbbafb3ba9eabe1942e69668c58431fc6c88f9674a0bae89e4bfc6e82"
+    },
+    {
+      "path": "Sequence Diagrams/UC-06.txt",
+      "sha256": "a2fbe51d38fed6dc4ad6ea55ebaeb1e68a69c96201cf3b4d76a87044dee856cf"
+    },
+    {
+      "path": "Sequence Diagrams/UC-07.txt",
+      "sha256": "c880c5639fc2e386c8ef2c81bad46ef4a5ef28eae68de73443d162006bb17599"
+    },
+    {
+      "path": "Sequence Diagrams/UC-08.txt",
+      "sha256": "7bc007ee640ab325d4ac1f1531af27e14d57d055b8dcb57648f499d046a38018"
+    },
+    {
+      "path": "Sequence Diagrams/UC-09.txt",
+      "sha256": "2c6969909bde54de99d7e803d113e2b91e71dd248328efe08069f0a76fc84d12"
+    },
+    {
+      "path": "Sequence Diagrams/UC-10.txt",
+      "sha256": "e33dcb3d8bd87d068944a5be437366618b2de43297d1d7f33010df2c8d495010"
+    },
+    {
+      "path": "Sequence Diagrams/UC-11.txt",
+      "sha256": "e4ae82b4bf7f3a140cdf5bd3363d87f79dbd2bccc30caa63ab087328ea8c940d"
+    },
+    {
+      "path": "Data-Dictionary-Images/actor_account.png",
+      "sha256": "91bb37c2a5079405260103a0182d9dd12708acf725469d547a41d1709604616c"
+    },
+    {
+      "path": "Data-Dictionary-Images/application.png",
+      "sha256": "5083d0bf49cde7206efa91c3c75b0707b7a16ee6c55def07ce91a634a157974d"
+    },
+    {
+      "path": "Data-Dictionary-Images/checklist_item.png",
+      "sha256": "5860502668ee02c77c124e553587a0c676c04e60a14c363031d32336558818eb"
+    },
+    {
+      "path": "Data-Dictionary-Images/document.png",
+      "sha256": "e9e968e9c6389663d65b452436246b3a2276a1f0e565604f7911f7ebbbe71383"
+    },
+    {
+      "path": "Data-Dictionary-Images/document_receipt.png",
+      "sha256": "f1c473c8454abdbd37f9788fa1c9c896e7aca2374d1810a08c3e65b9febc25d8"
+    },
+    {
+      "path": "Data-Dictionary-Images/document_set.png",
+      "sha256": "185cd8625d42c24c86c2f76b88e78ebc798d578b4ab9aaedbccda8453fbd165c"
+    },
+    {
+      "path": "Data-Dictionary-Images/document_set_document.png",
+      "sha256": "aadd0e991076472dc23b53db41fe7d176f72839edca618997d66189395811303"
+    },
+    {
+      "path": "Data-Dictionary-Images/employer.png",
+      "sha256": "ff2264a7e76d89b24492014cc9d87403cca8c32f791327441931aced44837276"
+    },
+    {
+      "path": "Data-Dictionary-Images/employment.png",
+      "sha256": "4bd11b3e4ad7c23417fb86d41fded332b0a0c54d5ee38f74bef82fe803812d19"
+    },
+    {
+      "path": "Data-Dictionary-Images/entry_record.png",
+      "sha256": "41d5f3489d5f7d98e620881c8b86b6eeeb57d252c579e1860dad838e2493c581"
+    },
+    {
+      "path": "Data-Dictionary-Images/health_check.png",
+      "sha256": "02ebf3f34369d85552eaedb91fd3e6d00c87004c566f4a2acf32205b81f7abd8"
+    },
+    {
+      "path": "Data-Dictionary-Images/login_service.png",
+      "sha256": "4bc511015f046464424a0cf2d24c80c6211247f9dacb163dbffb9cfa97717236"
+    },
+    {
+      "path": "Data-Dictionary-Images/login_session.png",
+      "sha256": "ec1982bc9a6697f5efdc728da7472450f15fb76b166426c3dcd096167698c3a2"
+    },
+    {
+      "path": "Data-Dictionary-Images/worker.png",
+      "sha256": "0c6aec439773d6670d8f6a4ac0f8e926841113c234db017630a21f84f3994f2a"
+    },
+    {
+      "path": "Report/UI Design/README.md",
+      "sha256": "043d3d2c41a4f350b02bca7831f44161ec978940741424a1beedf15cd1b7acec"
+    }
+  ],
+  "figma": {
+    "er": "https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=322-5899",
+    "queries": "https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=322-7040",
+    "main3": "https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=230-10120",
+    "ui": "https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g",
+    "coverage": "https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g?node-id=10-829",
+    "sitemap": "https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=338-3418"
+  },
+  "limitations": "External sources are not bundled. Figma links are mutable references, not immutable snapshots. Hashes detect file changes, not semantic correctness."
+}

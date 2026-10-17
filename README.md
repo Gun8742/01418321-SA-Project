@@ -15,7 +15,10 @@
 - [Architecture](docs/architecture.md) — Directory, Dependency และหน้าที่แต่ละส่วน
 - [Use Case Map](docs/use-case-map.md) — UC → Module → หน้าจอและพื้นที่ Route
 - [Data Model Sources](docs/data-model.md) — ER ล่าสุด, Actor Login และสถานะเอกสารรายละเอียดข้อมูล
+- [Implementation Specifications](docs/specs/README.md) — Product, Frontend, Backend, Contract, Workflow, สิทธิ์, Database และ Acceptance ครบ UC-01–UC-11; Draft พร้อม Open decisions
 - [Figma UI Design](https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g) — แบบหน้าจอและ Components
 
 เมื่อเริ่มทำแอป ให้เลือกเวอร์ชันที่เข้ากัน เพิ่ม configuration ที่จำเป็น และบันทึกคำสั่งที่รันได้จริงใน README
 เอกสาร Requirement บางส่วนอยู่ภายนอก Repository ตามที่ระบุใน AGENTS.md จึงไม่ได้มากับการ clone นี้
+
+ตรวจ Spec: `python3 scripts/check-specs.py` (ตรวจเอกสาร ไม่ใช่ application tests)
