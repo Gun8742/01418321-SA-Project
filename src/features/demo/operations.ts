@@ -130,7 +130,10 @@ function recordDecision(data:DemoData,actor:Actor,raw:unknown) {
   requireRule(input.decision!=="ADDITIONAL_DOCUMENTS"||input.requestedItems.trim(),"กรุณาระบุเอกสารที่ขอเพิ่ม");
   a.decisionStatus=input.decision;a.reason=input.reason;a.requestedItems=input.requestedItems;a.decidedAt=input.decision==="PENDING"?"":input.decidedAt;
   a.evidenceDocumentIds=input.evidenceDocumentIds;a.version++;stage.version++;
-  if(input.decision==="ADDITIONAL_DOCUMENTS")stage.readinessStatus="AWAITING_REVIEW";
+  if(input.decision==="ADDITIONAL_DOCUMENTS") {
+    stage.readinessStatus="AWAITING_REVIEW";
+    stage.items.push({requirementKey:"additional-"+a.version,label:input.requestedItems,required:true,documentId:null});
+  }
   a.history.push({label:input.decision+(input.reason?": "+input.reason:""),at:new Date().toISOString()});return a.id;
 }
 function addSupportingDocument(data:DemoData,actor:Actor,raw:unknown) {
