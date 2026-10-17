@@ -45,7 +45,8 @@ Auth endpoint อาจใช้ library-native response; adapter ต้อง m
 | DTO | Fields ที่ public consumer ต้องใช้ |
 |---|---|
 | ActorContext | accountId, role: EMPLOYER/REPRESENTATIVE/WORKER, employerId หรือ workerId ตาม Role; ไม่มี hashes |
-| WorkerSummary | workerId, displayName, nationality, maskedPassportNo, scoped employment summary, version |
+| WorkerSummary | workerId, displayName, nationality, maskedPassportNo, version; รายการการจ้างอ่านผ่าน listWorkerEmployments |
+| EmploymentSummary | employmentId, workerId, job, startDate/endDate, version; เฉพาะ Employer scope ใช้ใน selector |
 | WorkerEmploymentDetail | Worker fields ที่จำเป็นใน scope, employmentId, employer summary, job/dates/wage, versions |
 | DocumentSetDetail | id, employmentId, type: PRE_ARRIVAL/VISA/WORK_PERMIT, caseKey, checklistVersion, readinessStatus, items, documents, applicationId?, version, blockers/actions |
 | ChecklistItem | id, requirementKey, label, required, applicability, checkResult, missingReason?, documentIds |
@@ -54,7 +55,7 @@ Auth endpoint อาจใช้ library-native response; adapter ต้อง m
 | EntryDetail | id, workerId, visaDocumentId, plan, planStatus: DRAFT/CONFIRMED, actual result/evidence, entryResult, version, blockers/actions |
 | HealthDetail | id, workerId, entryId, hospital/visit/result/followup, certificateDocumentId?, resultStatus, version, blockers/actions |
 | ReceiptDetail | id, documentId, workerId, receivedAt, channel, confirmedByAccountId |
-| CorrectionDetail | id, targetType/id, reason, evidence refs, status, resolution?, reportedAt, resolvedAt?, version |
+| CorrectionDetail | id, targetType, targetId, employmentId, reason, evidenceDocumentIds, status, resolution?, reportedAt, resolvedAt?, resolvedByAccountId?, version, availableActions |
 
 owner เป็น discriminated union: { kind: "EMPLOYER", employerId } หรือ { kind: "WORKER", workerId }; ส่งทั้งคู่ไม่ได้
 availability เสนอ MISSING / DIGITAL_READY / PHYSICAL_READY; physical ต้องมีหลักฐาน/ช่องทางรับที่ยืนยัน ไม่ใช่ช่องติ๊กตามใจ
@@ -66,6 +67,7 @@ Detail DTO ไม่จำเป็นต้องส่ง fields ทั้ง�
 ## Input groups และ Referential rules
 
 WorkerEmploymentDraft ใช้ fields ตาม [Frontend](frontend.md); create เชื่อม existing worker ที่มีสิทธิ์หรือสร้างใหม่ตาม duplicate policy O-06
+การแก้ Employment เดิมต้องส่ง workerId และ employmentId คู่ที่ระบุใน URL; ไม่อนุญาตเปลี่ยนคู่ความสัมพันธ์ผ่าน draft หรือเลือกการจ้างล่าสุดโดย implicit
 PreparationInput: documentSetId หรือ new employmentId/type/caseKey, fields ที่ whitelist ตามประเภท, linked documentIds
 SubmissionInput: applicationId หรือ documentSetId, authority/submittedAt/receiptNo/acceptedEvidenceDocumentIds
 DecisionInput: applicationId, decision, decidedAt, evidenceDocumentIds, reason?, requestedItems?
@@ -76,6 +78,11 @@ TravelPlanOutput: planStatus DRAFT/CONFIRMED แยกจาก entryResult PLAN
 EntryResultInput: entryId, result: ALLOWED/DENIED/PENDING_VERIFICATION, actualArrivalAt?, decisionAt?, reason?, permittedUntil?, evidenceDocumentIds
 HealthInput: entryId หรือ healthCheckId, visit/result/certificate fields แยก operation; certificate มี issuedAt, doctorName และ certificateNo เมื่อมี
 CorrectionInput: targetType (VISA/ENTRY/WORK_PERMIT), targetId, reason, evidenceDocumentIds
+VISA/WORK_PERMIT targetId อ้าง Document ชนิดตรงกัน; ENTRY อ้าง EntryRecord; Server derive Worker/Employment และตรวจ scope ไม่รับผู้รับเรื่องจาก Client
+ResolveCorrectionInput: correctionId, resolution (ข้อความ 1–2,000 characters หลัง trim), expectedVersion, requestId
+reportCorrection ใช้ requestId และไม่มี expectedVersion เพราะสร้างใหม่; ไม่รับ resourceType/resourceId หรือ alias อื่น ให้คืน VALIDATION_ERROR สำหรับ unknown fields
+listCorrections input: employmentId สำหรับ Employer หรือ targetType+targetId สำหรับ Worker ในหน้าต้นทาง, status? (OPEN/RESOLVED), page/pageSize ตาม read query; คืนรายการแบบ paginated ของ CorrectionDetail ภายใน scope
+getCorrection input: correctionId; resolveCorrection ตรวจ status OPEN และ current version ก่อนปิด; RESOLVED ห้ามเปลี่ยนคำตอบเงียบ ๆ
 
 IDs ทั้งหมดต้องมี scope และ Worker/Employment ตรงกัน; เป็น ID ที่ valid syntactically ไม่ได้แปลว่าเชื่อมได้
 submission fields อาจขาดได้ใน draft; เปลี่ยน SUBMITTED ต้องครบตาม case checklist ที่อนุมัติ
@@ -86,6 +93,8 @@ Decision ADDITIONAL_DOCUMENTS ต้อง reason/requested items; REJECTED ต�
 
 listWorkers input: q ไม่เกิน 100 characters, page default 1, pageSize default 20/max 100, sort whitelist name/updatedAt พร้อม id tie-breaker
 output: items, page, pageSize, total, hasNext; apply scope ก่อน search/count/pagination
+listWorkerEmployments input: workerId; output: EmploymentSummary[] เฉพาะ Employer ของ session; ใช้เลือกบริบท ไม่ส่งประวัตินายจ้างอื่น
+getWorkerEmployment input: workerId และ employmentId ทั้งคู่; ส่งคู่ไม่ตรงหรืออยู่นอก scope คืน NOT_FOUND ไม่ fallback ไปการจ้างอื่น
 detail queries ใช้ context ID ชัดเจน; Worker มีหลาย Application ให้ผู้ใช้เลือก ห้ามเลือกคนละเรื่องเพราะ updatedAt ใหม่กว่า
 Auth/session และ signed URL ไม่ cache แบบ public; invalidation ครอบคลุม Overview และหน้าติดตามของ Actor ที่เกี่ยวข้อง
 

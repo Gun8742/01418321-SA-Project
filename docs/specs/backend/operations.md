@@ -25,7 +25,8 @@ requestId replay ต้องตรวจ policy ปัจจุบันก่�
 | Operation | Input | Response data | Scope / filtering |
 |---|---|---|---|
 | listWorkers | q?, page?, pageSize?, sort? | items: WorkerSummary[], page/pageSize/total/hasNext | Employer/Representative; scope ก่อน search/count, whitelist sort และ stable ID tie-breaker |
-| getWorkerEmployment | workerId, employmentId? | WorkerEmploymentDetail + scoped documents/sets | employmentId ต้องเป็นของ Worker และ Employer ตน; หากมีหลายการจ้างไม่เลือกผิดเรื่องเงียบ ๆ |
+| listWorkerEmployments | workerId | EmploymentSummary[] | เฉพาะ Employer ของ session; selector ไม่เผยประวัตินายจ้างอื่น |
+| getWorkerEmployment | workerId, employmentId (required ทั้งคู่) | WorkerEmploymentDetail + scoped documents/sets | คู่ต้องตรงกันและเป็นของ Employer ตน; มิฉะนั้น NOT_FOUND ไม่มี fallback/latest |
 | getPreparationContext | employmentId, type, documentSetId? | profile/job fields, case options, existing documents, current set/checklist, gate blockers | Employer ตน; pre-arrival/Visa/Work Permit ตาม case; ไม่รวมคลังเอกสารคนละ Employment |
 | getCaseChecklist | employmentId, type, caseKey, visaType?, targetAuthority, country?, travelStatus?, workHistory? | checklistVersion, applicable requirements, required/conditional flags, template reference | ตรวจ case กับข้อมูลจริง; unknown applicability เก็บ draft ได้แต่ review ไม่ผ่าน |
 | getApplicationDetail | applicationId หรือ documentSetId (อย่างใดอย่างหนึ่ง) | ApplicationDetail, evidence, requested items, issued document summary | Employer detail; Worker projection เฉพาะสถานะ/เอกสารตน; ไม่ค้นด้วยเลขรับทั่วระบบ |
@@ -35,7 +36,8 @@ requestId replay ต้องตรวจ policy ปัจจุบันก่�
 | getTravelContext | visaDocumentId, entryId? | Worker/valid Visa/receipt, plan/result/evidence, version/actions | Worker ตน; Employer อ่านผ่าน employment scope; entryId ต้องใช้ Visa เดียวกัน |
 | getEntryResult | entryId | EntryDetail + safe evidence summaries | ตาม Worker/Employment scope |
 | getHealthCheckContext | entryId, healthCheckId? | identity, allowed entry, visit/result/certificate, version/actions | ต้อง entry ALLOWED เพื่อเริ่ม; ผู้มีสิทธิ์อ่านสถานะเดิมได้แม้ write ถูกบล็อก |
-| getCorrectionDetail | correctionId | CorrectionDetail + allowed resolution actions | reporter Worker หรือ Employer ที่รับผิดชอบ resource |
+| listCorrections | employmentId หรือ targetType+targetId, status?, page?, pageSize? | scoped items/total/hasNext | Employer เฉพาะ Employment ตน; Worker เฉพาะคำแจ้งตน; scope ก่อน count/pagination |
+| getCorrection | correctionId | CorrectionDetail + resolution/resolvedBy/resolvedAt | reporter Worker หรือ Employer ที่รับผิดชอบ resource |
 | getMutationOutcome | operation, requestId | COMMITTED + result reference/current versions หรือ NOT_RECORDED | current Actor + operation key เท่านั้น; NOT_RECORDED ไม่รับรองว่า external activity ไม่เกิด |
 | resolveActor | trusted session เท่านั้น | safe ActorContext | session active, unexpired/unrevoked, service/account/link ตรงกัน |
 
@@ -50,6 +52,7 @@ worker: { id?, fullName, dateOfBirth, nationality, passportNo, passportIssuerCou
 employer: { name, registrationNo, address, contactName, contactPhone } (แก้เฉพาะ linked Employer ของ session)
 employment: { id?, jobTitle, jobDescription, workplace, startDate, endDate?, employmentTerms, wageAmount, wageCurrency, wageUnit }
 documentIds: ไฟล์ที่ complete upload แล้ว; expectedVersions เมื่อแก้ existing records; requestId
+Update ต้อง workerId + employmentId คู่เดิมจาก URL; ห้ามเปลี่ยนคู่ผ่าน draft และไม่มี latest-employment fallback
 Output: WorkerEmploymentDetail + touched versions; ไม่สร้าง Account/login ให้อัตโนมัติ
 
 Validate identity ตามหลักฐาน, required values ตาม Description, birthday/issue/expiry/start/end สอดคล้อง, email/phone รูปแบบที่ยืนยัน, wage decimal + unit
@@ -162,13 +165,13 @@ Health COMPLETE อย่างเดียวไม่เปิด gate ถ้�
 
 ## Corrections
 
-reportCorrection input: targetType: VISA/ENTRY/WORK_PERMIT, targetId, fieldPaths? (allowlist), reason, evidenceDocumentIds, requestId
+reportCorrection input: targetType: VISA/ENTRY/WORK_PERMIT, targetId, reason, evidenceDocumentIds, requestId
 Worker ของ resource แจ้ง OPEN; คืน CorrectionDetail; ไม่แก้ Document/Application/Entry status ตอนแจ้ง
-resolveCorrection input: correctionId, resolution, permittedRecordedFieldPatch?, evidenceDocumentIds, expectedVersion, targetExpectedVersion?, requestId
-Employer ที่รับผิดชอบต้องมีสิทธิ์ target operation เดิมด้วย; entry/health evidence ยังต้อง grant, final-result correction รอ O-07
-การ resolve เฉย ๆ ไม่ให้สิทธิ์เขียน issued record; ถ้า policy ยังไม่อนุมัติให้เก็บคำแจ้ง OPEN แทน fake resolved
-เมื่อแก้ได้แล้วต้องเก็บ old/new values ที่จำเป็น, actor/time/reason/evidence และ invalidate dependent draft reviews แบบ atomic
-ไม่เปิด generic PATCH arbitrary object หรือเปลี่ยนไฟล์ต้นฉบับที่หน่วยงานออกโดยเงียบ ๆ
+resolveCorrection input: correctionId, resolution, expectedVersion, requestId
+Employer ใน Employment scope ตอบและปิด OPEN → RESOLVED พร้อม resolvedBy/resolvedAt; resolution required, RESOLVED เป็น read-only และ retry ตาม requestId
+เป็นคำตอบปิดเรื่อง ไม่รับ target patch และไม่เพิ่มสิทธิ์แก้ผล/เอกสารภายนอก; การแก้ข้อมูลจริงต้อง operation/policy ที่มีสิทธิ์แยกตาม O-02/O-07 พร้อม history และ invalidation ที่เกี่ยวข้อง
+การปิดเรื่องไม่อ้างว่าได้แก้เอกสารต้นฉบับ; Worker อ่านคำตอบ/ผู้ตอบ/เวลาได้ผ่าน listCorrections/getCorrection; ไม่มี chat/thread ใน v1
+Server derive Employment/ผู้รับจาก target ตอน report; Client ไม่ส่งผู้รับหรือ field alias เพื่อเปลี่ยน scope
 
 ## Supporting Operations
 

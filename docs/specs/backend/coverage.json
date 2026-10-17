@@ -57,7 +57,7 @@
     "createDocumentSet",
     "getApplicationDetail",
     "getCaseChecklist",
-    "getCorrectionDetail",
+    "getCorrection",
     "getEntryResult",
     "getHealthCheckContext",
     "getMutationOutcome",
@@ -69,6 +69,8 @@
     "getWorkerEmployment",
     "initiateUpload",
     "linkDocument",
+    "listCorrections",
+    "listWorkerEmployments",
     "listWorkers",
     "recordDecision",
     "recordEntryResult",
@@ -136,7 +138,8 @@
       "operations": [
         "listWorkers",
         "getWorkerEmployment",
-        "saveWorkerEmployment"
+        "saveWorkerEmployment",
+        "listWorkerEmployments"
       ],
       "acceptanceId": "BE-UC04"
     },
@@ -232,7 +235,7 @@
   ],
   "commonOperations": [
     "getOwnOverview",
-    "getCorrectionDetail",
+    "getCorrection",
     "getMutationOutcome",
     "resolveCorrection",
     "signIn",
@@ -240,7 +243,8 @@
     "resolveActor",
     "initiateUpload",
     "completeUpload",
-    "cleanupTemporaryUploads"
+    "cleanupTemporaryUploads",
+    "listCorrections"
   ],
   "limitations": "Coverage checks verify references only, not runtime behavior or semantic correctness."
 }

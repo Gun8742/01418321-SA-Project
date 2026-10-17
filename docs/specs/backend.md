@@ -23,8 +23,8 @@ Shared schema/DTO เป็น pure types/validation; module อื่นเร�
 
 | Operation | UC / Module | Input สำคัญ | Output / invariant |
 |---|---|---|---|
-| listWorkers, getWorkerEmployment | UC-04 workers/employment | query/page หรือ workerId/employmentId | เฉพาะ Employer scope; count ไม่รวมผู้อื่น |
-| saveWorkerEmployment | UC-04 workers/employment | worker/employer/employment drafts, expectedVersions ของ records ที่แก้, requestId | Worker + Employer + Employment และ document links บันทึก atomic; ไม่ซ้ำเมื่อ request retry |
+| listWorkers, listWorkerEmployments, getWorkerEmployment | UC-04 workers/employment | query/page; selector ใช้ workerId; detail ใช้ workerId + employmentId ทั้งคู่ | เฉพาะ Employer scope; คู่ไม่ตรงคืน NOT_FOUND; ไม่เลือกการจ้างล่าสุดเอง |
+| saveWorkerEmployment | UC-04 workers/employment | worker/employer/employment drafts, expectedVersions ของ records ที่แก้, requestId; update ระบุ workerId + employmentId | Worker + Employer + Employment และ document links atomic; ตรวจคู่ ID/scope; retry ไม่ซ้ำ |
 | createDocumentSet, savePreparation | UC-01/02/05 documents + business module | employmentId/type/caseKey หรือ setId/fields, expectedVersion | draft ชุดใหม่; ไม่แทน set ของคำร้องเก่า |
 | linkDocument, unlinkDocument | UC-01/02/05 documents | setId/documentId, expectedVersion | ownership ถูกต้อง; เปลี่ยนหลัง review ต้อง reset readiness |
 | reviewDocumentSet | UC-01/02/06 documents + business module | setId/checklistVersion, expectedVersion | Server ตรวจ required fields/files; READY เฉพาะเมื่อครบ |
@@ -38,7 +38,9 @@ Shared schema/DTO เป็น pure types/validation; module อื่นเร�
 | recordEntryResult | UC-08 travel | entryId/result/decisionAt/evidence, expectedVersion | scope + entry:record-evidence capability; DENIED ปิดเส้นทาง |
 | saveHealthVisit | UC-09 medical | entryId/hospital/visit, expectedVersion | ALLOWED gate; update เฉพาะ PENDING ที่ยังไม่มีผล/ใบรับรอง; มิฉะนั้น HEALTH_VISIT_LOCKED ไม่ reset status |
 | recordHealthResult, confirmMedicalCertificate | UC-09 medical | healthCheckId/result/evidence หรือ certificate, expectedVersion | medical:record-evidence capability; ไม่วินิจฉัยเอง |
-| reportCorrection, resolveCorrection | Supporting | target/reason/evidence หรือ correctionId/resolution, expectedVersion | worker แจ้งตนเอง; Employer แก้เฉพาะ scope; ไม่แก้ issued metadata เงียบ ๆ |
+| listCorrections, getCorrection | Supporting | employmentId หรือ targetType+targetId/status/page; detail ใช้ correctionId | Employer เฉพาะ Employment ตน; Worker อ่านคำแจ้งตนพร้อม resolution; filter scope ก่อน count/pagination |
+| reportCorrection | Supporting | targetType, targetId, reason, evidenceDocumentIds, requestId | Worker แจ้งตนเอง; derive Employment ผู้รับจาก target; ไม่รับ field alias/ผู้รับจาก Client |
+| resolveCorrection | Supporting | correctionId, resolution, expectedVersion, requestId | Employer เฉพาะ scope ตอบและปิด OPEN → RESOLVED พร้อม actor/time; ไม่เพิ่มสิทธิ์แก้ issued result |
 | initiateUpload, completeUpload, authorizeDownload | Shared documents | purpose/size/type/owner context หรือ uploadId/documentId | ตรวจ session/scope/bytes; private file; URL อายุจำกัด |
 | signIn, signOut, resolveActor | Supporting auth | credentials หรือ trusted session | Auth library integration หลังตัดสิน O-01; คืน session-safe context |
 

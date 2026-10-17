@@ -69,7 +69,7 @@ operation_receipt ไม่เก็บ raw input, password, file bytes หร�
 | Health visit | ALLOWED entry, unique entry episode, PENDING without results/certificate, version | เฉพาะ visit fields+version/operation receipt; locked guard กับผล/certificate ต้องอยู่ใน transaction เดียวกัน |
 | Actual receipt | owner/approval/issued availability, existing receipt | receipt once + operation receipt; no download side effect |
 | Entry/Health | capability currently active, same Worker, upstream gate/version | result/certificate/evidence/event/version/dependent draft invalidation/receipt |
-| Correction resolution | existing correction and target version, original target policy | allowed recorded patch/history + correction RESOLVED + invalidation + versions/receipt |
+| Correction resolution | correction OPEN/version, Employer scope ที่ derive จาก target | resolution+RESOLVED+resolvedBy/resolvedAt+version/operation receipt; ไม่ patch target; การแก้ target ใช้ operation/policy แยก |
 | Upload completion | reservation actor/scope/expiry/object immutable version/bytes | Document+reservation completion+optional links/aggregate version+receipt |
 
 External file upload/delete ไม่อยู่ใน DB transaction; ตรวจ immutable object version/checksum ก่อน reference เพื่อกันเปลี่ยน bytes หลังตรวจ

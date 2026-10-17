@@ -37,7 +37,7 @@ UI label ไม่ใช่ Enum และไม่ต้องใช้ภา�
 | saveHealthVisit | Entry ALLOWED ของ Worker เดียวกัน; update เฉพาะ PENDING ที่ยังไม่มีผล/หลักฐานผล/ใบรับรอง | create PENDING; update เปลี่ยนเฉพาะนัด ไม่ reset result/certificate; หลังมีผลคืน HEALTH_VISIT_LOCKED โดยไม่เปลี่ยน gate |
 | recordHealthResult | มี grant บันทึกผลและหลักฐานจริง | PENDING/ADDITIONAL_TESTS/COMPLETE ตามข้อมูล; COMPLETE อย่างเดียวไม่สร้างไฟล์ใบรับรอง |
 | confirmMedicalCertificate | มี grant บันทึกผล; ผลครบ ไม่มีรายการรอเพิ่ม ใบรับรองตรงบุคคลและพร้อมใช้ | เปิด certificate สำหรับชุด Work Permit ตามกรณี |
-| resolveCorrection | ผู้รับผิดชอบมีสิทธิ์และตรวจหลักฐานแล้ว | แก้เฉพาะข้อมูลบันทึก พร้อมเหตุผล; ไม่แก้เอกสาร/ผลตัดสินต้นฉบับ |
+| resolveCorrection | Employer ใน Employment scope, คำแจ้ง OPEN/version ตรง, ตรวจหลักฐาน/การดำเนินการที่มีสิทธิ์แล้ว | บันทึกคำตอบ+RESOLVED+ผู้ตอบ/เวลา; ไม่ patch target หรือเพิ่มสิทธิ์แก้ผลภายนอก |
 
 PENDING ไม่ใช่ปุ่มให้ผู้ใช้ย้อนผลสุดท้าย; การแก้ผลที่บันทึกผิดต้องใช้ correction flow พร้อมเหตุผลและตรวจหลักฐาน
 UC-01 ใช้ attachIssuedDocument เก็บหนังสืออนุมัติจริงเพื่อเปิด UC-05; UC-11 ต้องแนบ Visa file จริง ส่วนช่องทางรับ Work Permit ใช้หลักฐานตามกรณี/O-05
