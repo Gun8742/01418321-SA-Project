@@ -1,2 +1,4 @@
 import { WorkerRouter } from "@/features/demo/worker-router";
-export default function WorkerHome(){return <WorkerRouter/>;}
+export default function WorkerHome() {
+  return <WorkerRouter />;
+}
