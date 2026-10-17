@@ -1,0 +1,519 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  EMPLOYER
+  REPRESENTATIVE
+  WORKER
+}
+
+enum CaseKind {
+  PRE_ARRIVAL
+  VISA
+  WORK_PERMIT
+}
+
+enum Readiness {
+  NOT_READY
+  AWAITING_REVIEW
+  READY
+}
+
+enum SubmissionStatus {
+  NOT_SUBMITTED
+  AWAITING_SUBMISSION_CONFIRMATION
+  SUBMITTED
+}
+
+enum DecisionStatus {
+  NOT_DECIDED
+  PENDING
+  ADDITIONAL_DOCUMENTS
+  APPROVED
+  REJECTED
+}
+
+enum DocumentType {
+  SUPPORTING
+  APPROVAL_LETTER
+  VISA
+  WORK_PERMIT
+  ENTRY
+  CERTIFICATE
+}
+
+enum PlanStatus {
+  DRAFT
+  CONFIRMED
+}
+
+enum EntryResult {
+  PLANNED
+  PENDING_VERIFICATION
+  ALLOWED
+  DENIED
+}
+
+enum HealthStatus {
+  PENDING
+  ADDITIONAL_TESTS
+  COMPLETE
+}
+
+enum CorrectionStatus {
+  OPEN
+  RESOLVED
+}
+
+model User {
+  id              String        @id
+  name            String
+  email           String        @unique
+  emailVerified   Boolean       @default(false)
+  image           String?
+  username        String?       @unique
+  displayUsername String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  actor           ActorAccount?
+
+  @@map("auth_user")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  token     String   @unique @map("token_hash")
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("login_session")
+}
+
+model Account {
+  id                    String    @id
+  userId                String
+  accountId             String
+  providerId            String
+  password              String?   @map("password_hash")
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("auth_credential")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("auth_verification")
+}
+
+model LoginService {
+  id     BigInt         @id @default(autoincrement())
+  name   String         @unique
+  active Boolean        @default(true)
+  actors ActorAccount[]
+
+  @@map("login_service")
+}
+
+model ActorAccount {
+  id         BigInt              @id @default(autoincrement())
+  userId     String              @unique
+  role       Role
+  employerId BigInt?
+  workerId   BigInt?
+  serviceId  BigInt
+  active     Boolean             @default(true)
+  user       User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  employer   Employer?           @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  worker     Worker?             @relation(fields: [workerId], references: [id], onDelete: Restrict)
+  service    LoginService        @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  grants     CapabilityGrant[]
+  uploads    FileUpload[]
+  operations OperationReceipt[]
+  receipts   DocumentReceipt[]
+  reported   CorrectionRequest[] @relation("reporter")
+  resolved   CorrectionRequest[] @relation("resolver")
+
+  @@map("actor_account")
+}
+
+model Employer {
+  id             BigInt         @id
+  name           String
+  registrationNo String
+  address        String
+  contact        String
+  version        Int            @default(1)
+  employments    Employment[]
+  actors         ActorAccount[]
+  documents      Document[]
+
+  @@map("employer")
+}
+
+model Worker {
+  id                BigInt         @id
+  version           Int            @default(1)
+  name              String
+  nationality       String
+  passportNo        String
+  birthDate         DateTime       @db.Date
+  passportCountry   String
+  passportIssuedAt  DateTime       @db.Date
+  passportExpiresAt DateTime       @db.Date
+  email             String
+  phone             String
+  address           String
+  actors            ActorAccount[]
+  employments       Employment[]
+  documents         Document[]
+
+  @@index([nationality, passportNo])
+  @@map("worker")
+}
+
+model Employment {
+  id             BigInt              @id
+  employerId     BigInt
+  workerId       BigInt
+  version        Int                 @default(1)
+  job            String
+  jobDescription String
+  location       String
+  startDate      DateTime            @db.Date
+  endDate        DateTime            @db.Date
+  wage           Decimal             @db.Decimal(18, 2)
+  wageUnit       String
+  employer       Employer            @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  worker         Worker              @relation(fields: [workerId], references: [id], onDelete: Restrict)
+  stages         DocumentSet[]
+  documents      Document[]
+  entries        EntryRecord[]
+  healthChecks   HealthCheck[]
+  corrections    CorrectionRequest[]
+  uploads        FileUpload[]
+  grants         CapabilityGrant[]
+  operations     OperationReceipt[]
+
+  @@index([employerId, workerId])
+  @@index([workerId])
+  @@map("employment")
+}
+
+model DocumentSet {
+  id               BigInt                @id
+  employmentId     BigInt
+  type             CaseKind
+  caseKey          String
+  country          String
+  authority        String
+  version          Int                   @default(1)
+  readinessStatus  Readiness             @default(NOT_READY)
+  checklistVersion String
+  reviewedAt       DateTime?
+  reviewedBy       BigInt?
+  reviewedSnapshot Json?
+  employment       Employment            @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  items            ChecklistItem[]
+  documents        DocumentSetDocument[]
+  application      Application?
+
+  @@index([employmentId, type])
+  @@map("document_set")
+}
+
+model ChecklistItem {
+  documentSetId  BigInt
+  requirementKey String
+  label          String
+  required       Boolean
+  documentId     BigInt?
+  checkResult    String      @default("NOT_CHECKED")
+  checkedAt      DateTime?
+  set            DocumentSet @relation(fields: [documentSetId], references: [id], onDelete: Restrict)
+  document       Document?   @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@id([documentSetId, requirementKey])
+  @@map("checklist_item")
+}
+
+model DocumentSetDocument {
+  documentSetId BigInt
+  documentId    BigInt
+  set           DocumentSet @relation(fields: [documentSetId], references: [id], onDelete: Restrict)
+  document      Document    @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@id([documentSetId, documentId])
+  @@index([documentId])
+  @@map("document_set_document")
+}
+
+model Application {
+  id               BigInt                     @id
+  documentSetId    BigInt                     @unique
+  version          Int                        @default(1)
+  submissionStatus SubmissionStatus           @default(NOT_SUBMITTED)
+  decisionStatus   DecisionStatus             @default(NOT_DECIDED)
+  authority        String
+  receiptNo        String?
+  submittedAt      DateTime?                  @db.Date
+  decidedAt        DateTime?                  @db.Date
+  reason           String
+  requestedItems   String
+  set              DocumentSet                @relation(fields: [documentSetId], references: [id], onDelete: Restrict)
+  evidence         Document[]                 @relation("applicationEvidence")
+  events           ApplicationEvent[]
+  issued           ApplicationIssuedDocument?
+
+  @@map("application")
+}
+
+model ApplicationEvent {
+  id            BigInt      @id @default(autoincrement())
+  applicationId BigInt
+  actorId       BigInt
+  label         String
+  at            DateTime
+  snapshot      Json
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+
+  @@index([applicationId, at])
+  @@map("application_event")
+}
+
+model ApplicationIssuedDocument {
+  applicationId BigInt       @id
+  type          DocumentType
+  documentId    BigInt       @unique
+  application   Application  @relation(fields: [applicationId], references: [id], onDelete: Restrict)
+  document      Document     @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@unique([applicationId, type])
+  @@map("application_issued_document")
+}
+
+model Document {
+  corrections        CorrectionRequest[]        @relation("correctionTargetDocument")
+  correctionEvidence CorrectionRequest[]        @relation("correctionEvidence")
+  id                 BigInt                     @id
+  employmentId       BigInt
+  employerId         BigInt?
+  workerId           BigInt?
+  fileId             String
+  type               DocumentType
+  title              String
+  documentNo         String?
+  issuer             String?
+  issuedAt           DateTime?                  @db.Date
+  validFrom          DateTime?                  @db.Date
+  expiresAt          DateTime?                  @db.Date
+  createdAt          DateTime                   @default(now())
+  employment         Employment                 @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  employer           Employer?                  @relation(fields: [employerId], references: [id], onDelete: Restrict)
+  worker             Worker?                    @relation(fields: [workerId], references: [id], onDelete: Restrict)
+  file               FileUpload                 @relation(fields: [fileId], references: [id], onDelete: Restrict)
+  sets               DocumentSetDocument[]
+  items              ChecklistItem[]
+  applications       Application[]              @relation("applicationEvidence")
+  issued             ApplicationIssuedDocument?
+  receipt            DocumentReceipt?
+  visaEntries        EntryRecord[]              @relation("visa")
+  travelEvidence     EntryRecord[]              @relation("travelEvidence")
+  entryEvidence      EntryRecord[]              @relation("entryEvidence")
+  healthEvidence     HealthCheck[]              @relation("healthEvidence")
+  certificate        HealthCheck?               @relation("certificate")
+
+  @@index([employmentId])
+  @@map("document")
+}
+
+model DocumentReceipt {
+  id         BigInt       @id @default(autoincrement())
+  documentId BigInt       @unique
+  actorId    BigInt
+  receivedAt DateTime     @db.Date
+  channel    String
+  document   Document     @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  actor      ActorAccount @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@map("document_receipt")
+}
+
+model EntryRecord {
+  corrections      CorrectionRequest[] @relation("correctionTargetEntry")
+  id               BigInt              @id
+  employmentId     BigInt
+  visaDocumentId   BigInt              @unique
+  version          Int                 @default(1)
+  planStatus       PlanStatus          @default(DRAFT)
+  plannedArrivalAt DateTime?           @db.Date
+  travelMode       String?
+  port             String?
+  flightNo         String?
+  entryResult      EntryResult         @default(PLANNED)
+  actualArrivalAt  DateTime?           @db.Date
+  permittedUntil   DateTime?           @db.Date
+  reason           String?
+  employment       Employment          @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  visa             Document            @relation("visa", fields: [visaDocumentId], references: [id], onDelete: Restrict)
+  travelEvidence   Document[]          @relation("travelEvidence")
+  evidence         Document[]          @relation("entryEvidence")
+  health           HealthCheck?
+
+  @@index([employmentId])
+  @@map("entry_record")
+}
+
+model HealthCheck {
+  id                    BigInt       @id
+  employmentId          BigInt
+  entryId               BigInt       @unique
+  version               Int          @default(1)
+  hospitalName          String
+  examDate              DateTime     @db.Date
+  resultStatus          HealthStatus @default(PENDING)
+  pendingItems          String
+  doctorName            String
+  certificateDocumentId BigInt?      @unique
+  verifiedAt            DateTime?
+  verifiedBy            BigInt?
+  employment            Employment   @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  entry                 EntryRecord  @relation(fields: [entryId], references: [id], onDelete: Restrict)
+  evidence              Document[]   @relation("healthEvidence")
+  certificate           Document?    @relation("certificate", fields: [certificateDocumentId], references: [id], onDelete: Restrict)
+
+  @@map("health_check")
+}
+
+model CorrectionRequest {
+  documentId          BigInt?
+  entryId             BigInt?
+  document            Document?        @relation("correctionTargetDocument", fields: [documentId], references: [id], onDelete: Restrict)
+  entry               EntryRecord?     @relation("correctionTargetEntry", fields: [entryId], references: [id], onDelete: Restrict)
+  evidence            Document[]       @relation("correctionEvidence")
+  id                  BigInt           @id
+  employmentId        BigInt
+  targetType          String
+  targetId            BigInt
+  reason              String
+  status              CorrectionStatus @default(OPEN)
+  resolution          String
+  reportedAt          DateTime
+  resolvedAt          DateTime?
+  reporterId          BigInt
+  resolvedByAccountId BigInt?
+  version             Int              @default(1)
+  employment          Employment       @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  reporter            ActorAccount     @relation("reporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  resolver            ActorAccount?    @relation("resolver", fields: [resolvedByAccountId], references: [id], onDelete: Restrict)
+
+  @@index([employmentId, status])
+  @@map("correction_request")
+}
+
+model CapabilityGrant {
+  id           String       @id @default(uuid())
+  actorId      BigInt
+  employmentId BigInt
+  capability   String
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  actor        ActorAccount @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  employment   Employment   @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+
+  @@unique([actorId, employmentId, capability])
+  @@map("capability_grant")
+}
+
+model FileUpload {
+  requestId    String?
+  ownerKind    String       @default("WORKER")
+  id           String       @id @default(uuid())
+  actorId      BigInt
+  employmentId BigInt
+  objectKey    String       @unique
+  originalName String
+  mime         String
+  size         Int
+  checksum     String?
+  status       String       @default("PENDING")
+  createdAt    DateTime     @default(now())
+  expiresAt    DateTime
+  actor        ActorAccount @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  employment   Employment   @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+  documents    Document[]
+
+  @@unique([actorId, requestId])
+  @@index([status, createdAt])
+  @@map("file_upload")
+}
+
+model OperationReceipt {
+  actorId      BigInt
+  operation    String
+  requestId    String
+  digest       String
+  resourceId   BigInt
+  employmentId BigInt
+  createdAt    DateTime     @default(now())
+  actor        ActorAccount @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  employment   Employment   @relation(fields: [employmentId], references: [id], onDelete: Restrict)
+
+  @@id([actorId, operation, requestId])
+  @@map("operation_receipt")
+}
+
+model IdSequence {
+  name      String @id
+  nextValue BigInt
+
+  @@map("id_sequence")
+}
+
+model CasePolicy {
+  version      String  @id
+  approved     Boolean @default(false)
+  synthetic    Boolean @default(true)
+  requirements Json
+
+  @@map("case_policy")
+}
+
+model RateLimit {
+  id          String @id
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("auth_rate_limit")
+}
