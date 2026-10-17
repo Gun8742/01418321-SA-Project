@@ -484,6 +484,7 @@ function ApplicationView({ stage }: { stage: Stage }) {
                     issuedAt: v.issuedAt,
                     validFrom: v.validFrom,
                     expiresAt: v.expiresAt,
+                    sourceDocumentId: v.sourceDocument,
                     fileName:
                       docs.find((d) => d.id === v.sourceDocument)?.fileName ??
                       "",

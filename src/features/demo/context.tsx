@@ -20,7 +20,15 @@ import { runOperation } from "./operations";
 
 const DATA_KEY = "sa-workforce-demo-v1";
 const ACTOR_KEY = "sa-workforce-demo-actor";
-type DemoContextValue = {
+export type DemoContextValue = {
+  mode: "mock" | "backend";
+  refresh: () => Promise<Actor | null>;
+  hasCapability: (capability: string, employmentId: string) => boolean;
+  uploadFile?: (
+    file: File,
+    employmentId: string,
+    ownerKind: "WORKER" | "EMPLOYER",
+  ) => Promise<OperationResult>;
   data: DemoData;
   actor: Actor | null;
   ready: boolean;
@@ -33,14 +41,14 @@ type DemoContextValue = {
   setGrants: (v: boolean) => void;
   setReadError: (v: boolean) => void;
   signIn: (actor: Actor) => boolean;
-  signOut: () => void;
+  signOut: () => boolean | Promise<boolean>;
   reset: (scenario: DemoScenario) => void;
   mutate: (
     name: OperationName,
     input: Record<string, unknown>,
   ) => Promise<OperationResult>;
 };
-const DemoContext = createContext<DemoContextValue | null>(null);
+export const DemoContext = createContext<DemoContextValue | null>(null);
 export function DemoProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState(createDemoData);
   const latest = useRef(data);
@@ -91,9 +99,11 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem(ACTOR_KEY);
     } catch {
       setNotice("ล้างบัญชีสาธิตใน browser ไม่สำเร็จ กรุณาล้าง session storage");
+      return false;
     }
     setActor(null);
     setGrants(false);
+    return true;
   }
   function reset(scenario: DemoScenario) {
     if (inFlight.current) return;
@@ -175,6 +185,9 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   return (
     <DemoContext.Provider
       value={{
+        mode: "mock",
+        refresh: async () => actor,
+        hasCapability: () => grants,
         data,
         actor,
         ready,

@@ -23,7 +23,8 @@ export function TravelView({
   entryId?: string;
   visaDocumentId?: string;
 }) {
-  const { data, mutate, grants } = useDemo();
+  const { data, mutate, hasCapability } = useDemo();
+  const grants = hasCapability("entry:record-evidence", employment.id);
   const entries = data.entries.filter((e) => e.employmentId === employment.id);
   const docs = data.documents.filter((d) => d.employmentId === employment.id);
   const visas = docs.filter((d) => d.type === "VISA");
