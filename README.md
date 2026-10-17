@@ -14,6 +14,7 @@
 - [AGENTS.md](AGENTS.md) — แหล่งข้อกำหนด กฎธุรกิจ และแนวทางทำงาน
 - [Architecture](docs/architecture.md) — Directory, Dependency และหน้าที่แต่ละส่วน
 - [Use Case Map](docs/use-case-map.md) — UC → Module → หน้าจอและพื้นที่ Route
+- [Data Model Sources](docs/data-model.md) — ER ล่าสุด, Actor Login และสถานะเอกสารรายละเอียดข้อมูล
 - [Figma UI Design](https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g) — แบบหน้าจอและ Components
 
 เมื่อเริ่มทำแอป ให้เลือกเวอร์ชันที่เข้ากัน เพิ่ม configuration ที่จำเป็น และบันทึกคำสั่งที่รันได้จริงใน README

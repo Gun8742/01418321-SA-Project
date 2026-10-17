@@ -72,6 +72,7 @@ Directory ใน `app/` เป็นพื้นที่เตรียมไ�
 
 Feature หนึ่งเรียกอีก Feature ผ่าน operation ที่ตั้งชื่อชัดเจน เช่น เตรียมคำขอหรือบันทึกการรับเอกสาร ไม่เข้าถึงไฟล์ภายในของกันและกันจนเกิด circular dependencies
 กฎข้อมูลลูกจ้างอยู่ใน Module ที่เป็นเจ้าของข้อมูล ส่วน Authentication บอกว่าเป็นใคร ไม่แทนการตรวจว่าบุคคลนั้นเข้าถึง record ใดได้บ้าง
+ก่อนกำหนด Prisma models หรือ Auth integration ให้อ้างอิง [Data Model Sources](data-model.md): ER ล่าสุดมี ActorAccount, LoginService และ LoginSession แล้ว จึงต้องเทียบ semantics กับ schema ของ library ก่อนใช้งาน ไม่สร้างระบบบัญชี/Session สองชุดซ้ำกัน
 ใช้ `server-only` กับ Database, Storage และ implementation ที่ต้องอยู่ฝั่ง Server; ไฟล์ `schemas.ts` ที่ Client ใช้ร่วมต้องไม่มี Server imports
 
 ## รูปแบบภายใน Feature

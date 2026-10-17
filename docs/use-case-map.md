@@ -33,6 +33,7 @@
 ## Design References
 
 - [Figma UI Design](https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g)
+- [ER Diagram — Peter Chen 2](https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=322-5899) — แบบข้อมูลล่าสุด รวม Actor Login; ดูข้อจำกัดใน [Data Model Sources](data-model.md)
 - [Prototype & Coverage](https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g?node-id=10-829)
 - [Site map](https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=338-3418)
 

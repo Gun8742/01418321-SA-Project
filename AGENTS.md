@@ -38,7 +38,8 @@ Stack ที่เสนอไว้สำหรับเริ่มพัฒ�
 
 - `../../Use case description - revised UC01-UC11.docx` — ข้อกำหนดหลักของ UC, Actor, Precondition และทางเลือก/ข้อผิดพลาด
 - `../../Sequence Diagrams/README.txt` และ `../../Sequence Diagrams/UC-XX.txt` — ลำดับงานและ data flow ประกอบแต่ละ UC
-- [ER Diagram](https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=263-9083) — Entity, Relationship และ Cardinality
+- [ER Diagram — Peter Chen 2](https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=322-5899) — ER ล่าสุดสำหรับ Entity, Relationship, Cardinality และ Actor Login; ใช้แทนหน้า Peter Chen เดิม
+- `../../Data-Dictionary-Images/` — ER Description ที่ผู้ใช้ยืนยัน มีภาพ Data Dictionary 14 ตารางสำหรับชนิดข้อมูล, NULL, PK/FK และข้อกำหนดที่เสนอ
 - [Main 3 (for ai) 2](https://www.figma.com/board/h7Vj8NzfRvX91Y0hag1uEx/SA-project?node-id=230-10120) — Business Process, Use Case และ CRUD Matrix
 
 ก่อนสร้างหรือปรับ UI ให้อ่านแหล่งต่อไปนี้:
@@ -48,6 +49,7 @@ Stack ที่เสนอไว้สำหรับเริ่มพัฒ�
 - `../../Report/UI Design/README.md` — จับคู่ UC กับหน้าจอ แหล่ง PNG และข้อจำกัด Prototype
 
 ใช้ revised Description เป็นหลักเมื่อ Figma รุ่นเก่าขัดกัน โดยเฉพาะ UC-11 ซึ่งยืนยันรวมในเอกสาร revised แล้ว แม้บางส่วนในบอร์ดยังเขียนว่าเป็นข้อเสนอ
+ก่อนออกแบบ schema, migrations หรือ Authentication ให้อ่าน [Data Model Sources](docs/data-model.md) และภาพ Data Dictionary ของตารางที่เกี่ยวข้อง; แยกข้อกำหนดที่เสนอออกจาก schema/SQL ที่ทดสอบจริง และตรวจช่องว่างเรื่อง nullability ตาม lifecycle ก่อนสร้าง migration
 หาก Description กับ ER ไม่ตรงกัน ให้ระบุช่องว่างและออกแบบ schema/migration ที่จำเป็นอย่างชัดเจน ไม่ถือว่า Attribute ที่ขาดใน ER เป็นข้อห้ามเพิ่มข้อมูลตาม Requirement
 เมื่อ clone Repository ไปเครื่องอื่นแล้วไม่พบเอกสารภายนอก ให้แจ้งแหล่งที่ขาดและขอเฉพาะข้อมูลที่จำเป็นต่อส่วนที่ทำ ห้ามแต่ง Requirement หรือผลการทดสอบขึ้นเอง
 
