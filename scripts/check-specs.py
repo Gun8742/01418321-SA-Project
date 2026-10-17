@@ -26,7 +26,7 @@ def heading_anchor(heading):
 
 def check_links(path):
     errors = []
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     if text.count("\x60\x60\x60") % 2:
         errors.append(f"{path.name}: unclosed code fence")
     for link in re.findall(r"\[[^\]]+\]\(([^)]+)\)", text):
@@ -37,7 +37,7 @@ def check_links(path):
         if not destination.exists():
             errors.append(f"{path.name}: missing target {link}")
         elif anchor and destination.suffix == ".md":
-            headings = re.findall(r"^#{1,6} (.+)$", destination.read_text(), re.M)
+            headings = re.findall(r"^#{1,6} (.+)$", destination.read_text(encoding="utf-8"), re.M)
             if anchor not in {heading_anchor(heading) for heading in headings}:
                 errors.append(f"{path.name}: missing anchor {link}")
     return errors
@@ -155,22 +155,22 @@ def self_check(examples):
 
 
 def main():
-    examples = json.loads((SPECS / "examples.json").read_text())
+    examples = json.loads((SPECS / "examples.json").read_text(encoding="utf-8"))
     self_check(examples)
     errors = check_examples(examples)
     markdown_files = sorted(SPECS.rglob("*.md")) + [ROOT / "README.md", ROOT / "AGENTS.md", ROOT / "docs/data-model.md"]
     for path in markdown_files:
         errors.extend(check_links(path))
     for name in ("workflows.md", "acceptance.md"):
-        text = (SPECS / name).read_text()
+        text = (SPECS / name).read_text(encoding="utf-8")
         for uc in sorted(UC_IDS):
             if uc not in text:
                 errors.append(f"{name}: missing {uc}")
-    acceptance = (SPECS / "acceptance.md").read_text()
+    acceptance = (SPECS / "acceptance.md").read_text(encoding="utf-8")
     for uc in sorted(UC_IDS):
         if f"AC-UC{uc[-2:]}" not in acceptance:
             errors.append(f"acceptance.md: missing acceptance ID for {uc}")
-    manifest = json.loads((SPECS / "source-manifest.json").read_text())
+    manifest = json.loads((SPECS / "source-manifest.json").read_text(encoding="utf-8"))
     errors.extend(check_sources(manifest))
     coverage = json.loads((SPECS / "backend/coverage.json").read_text())
     backend_examples = json.loads((SPECS / "backend/contract-examples.json").read_text())
