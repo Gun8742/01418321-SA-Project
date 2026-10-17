@@ -10,11 +10,16 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "check:specs": "python3 scripts/check-specs.py",
-    "format": "prettier --write src tests next.config.ts playwright.config.ts vitest.config.ts tsconfig.json package.json",
-    "format:check": "prettier --check src tests next.config.ts playwright.config.ts vitest.config.ts tsconfig.json package.json",
+    "format": "prettier --write src tests scripts/*.ts prisma/seed.ts *.config.ts tsconfig.json package.json",
+    "format:check": "prettier --check src tests scripts/*.ts prisma/seed.ts *.config.ts tsconfig.json package.json",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:seed": "node --conditions=react-server --import tsx prisma/seed.ts",
+    "test:integration": "node --conditions=react-server --import tsx scripts/test-backend.ts",
+    "db:grant": "node --conditions=react-server --import tsx scripts/grant-capability.ts",
+    "storage:cleanup": "node --conditions=react-server --import tsx scripts/cleanup-uploads.ts",
+    "test:e2e:backend": "playwright test --config playwright.backend.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0",

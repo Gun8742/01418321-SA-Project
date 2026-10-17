@@ -575,6 +575,11 @@ function confirmReceipt(data: DemoData, actor: Actor, raw: unknown) {
     input.receivedAt <= businessDate(),
     "วันที่รับต้องไม่อยู่ในอนาคต",
   );
+  requireRule(
+    !doc.issuedAt || input.receivedAt >= doc.issuedAt,
+    "วันรับต้องไม่ก่อนวันออกเอกสาร",
+    "VALIDATION_ERROR",
+  );
   if (doc.receivedAt) {
     requireRule(
       doc.receivedAt === input.receivedAt &&
@@ -590,19 +595,33 @@ function confirmReceipt(data: DemoData, actor: Actor, raw: unknown) {
 }
 function saveTravelPlan(data: DemoData, actor: Actor, raw: unknown) {
   worker(actor);
+  const common = {
+    ...requestFields,
+    visaDocumentId: idSchema,
+    entryId: idSchema.optional(),
+    expectedVersion: z.number().int().positive().optional(),
+  };
   const input = z
-    .strictObject({
-      ...requestFields,
-      visaDocumentId: idSchema,
-      entryId: idSchema.optional(),
-      expectedVersion: z.number().int().optional(),
-      mode: z.enum(["DRAFT", "CONFIRM"]),
-      plannedArrivalAt: dateSchema.or(z.literal("")),
-      travelMode: z.enum(["AIR", "LAND", "SEA"]),
-      port: z.string(),
-      flightNo: z.string(),
-      travelEvidenceDocumentIds: z.array(idSchema),
-    })
+    .discriminatedUnion("mode", [
+      z.strictObject({
+        ...common,
+        mode: z.literal("DRAFT"),
+        plannedArrivalAt: dateSchema.or(z.literal("")).optional(),
+        travelMode: z.enum(["AIR", "LAND", "SEA"]).optional(),
+        port: z.string().max(200).optional(),
+        flightNo: z.string().max(100).optional(),
+        travelEvidenceDocumentIds: z.array(idSchema).optional(),
+      }),
+      z.strictObject({
+        ...common,
+        mode: z.literal("CONFIRM"),
+        plannedArrivalAt: dateSchema,
+        travelMode: z.enum(["AIR", "LAND", "SEA"]),
+        port: requiredText,
+        flightNo: z.string().max(100),
+        travelEvidenceDocumentIds: z.array(idSchema).min(1),
+      }),
+    ])
     .parse(raw);
   const visa = data.documents.find(
     (d) => d.id === input.visaDocumentId && d.type === "VISA",
@@ -611,7 +630,9 @@ function saveTravelPlan(data: DemoData, actor: Actor, raw: unknown) {
   const e = scopedEmployment(data, actor, visa.employmentId);
   requireRule(visa.receivedAt, "ต้องยืนยันรับ Visa จริงก่อน");
   requireRule(
-    !visa.expiresAt || visa.expiresAt >= input.plannedArrivalAt,
+    !visa.expiresAt ||
+      !input.plannedArrivalAt ||
+      visa.expiresAt >= input.plannedArrivalAt,
     "Visa หมดอายุก่อนวันที่เดินทาง",
   );
   requireRule(
@@ -623,15 +644,16 @@ function saveTravelPlan(data: DemoData, actor: Actor, raw: unknown) {
   evidence(
     data,
     e.id,
-    input.travelEvidenceDocumentIds,
+    input.travelEvidenceDocumentIds ?? [],
     input.mode === "CONFIRM",
   );
   if (input.mode === "CONFIRM")
     requireRule(
       input.plannedArrivalAt &&
-        input.port.trim() &&
-        (input.travelMode !== "AIR" || input.flightNo.trim()),
+        input.port?.trim() &&
+        (input.travelMode !== "AIR" || input.flightNo?.trim()),
       "กรุณาระบุวันที่เดินทาง จุดผ่านแดน และเลขเที่ยวบินเมื่อเดินทางทางอากาศ",
+      "VALIDATION_ERROR",
     );
   let entry = data.entries.find((t) => t.id === input.entryId);
   if (input.entryId) {
@@ -677,11 +699,12 @@ function saveTravelPlan(data: DemoData, actor: Actor, raw: unknown) {
     "แผนยืนยันแล้วไม่เปลี่ยนกลับเป็น draft",
   );
   Object.assign(entry, {
-    plannedArrivalAt: input.plannedArrivalAt,
-    travelMode: input.travelMode,
-    port: input.port,
-    flightNo: input.flightNo,
-    travelEvidenceDocumentIds: input.travelEvidenceDocumentIds,
+    plannedArrivalAt: input.plannedArrivalAt ?? entry.plannedArrivalAt,
+    travelMode: input.travelMode ?? entry.travelMode,
+    port: input.port ?? entry.port,
+    flightNo: input.flightNo ?? entry.flightNo,
+    travelEvidenceDocumentIds:
+      input.travelEvidenceDocumentIds ?? entry.travelEvidenceDocumentIds,
     planStatus: input.mode === "CONFIRM" ? "CONFIRMED" : "DRAFT",
     version: entry.version + 1,
   });
@@ -749,6 +772,11 @@ function saveHealthVisit(data: DemoData, actor: Actor, raw: unknown) {
   requireRule(entry, "ไม่พบผลเข้าเมือง", "NOT_FOUND");
   scopedEmployment(data, actor, entry.employmentId);
   requireRule(entry.entryResult === "ALLOWED", "ต้องมีผลอนุญาตเข้าประเทศก่อน");
+  requireRule(
+    !entry.actualArrivalAt || input.examDate >= entry.actualArrivalAt,
+    "วันที่ตรวจต้องไม่ก่อนเข้าประเทศ",
+    "VALIDATION_ERROR",
+  );
   const existing = data.healthChecks.find((h) => h.id === input.healthCheckId);
   if (input.healthCheckId) {
     requireRule(
@@ -821,6 +849,11 @@ function recordHealthResult(
     input.result !== "ADDITIONAL_TESTS" || input.pendingItems.trim(),
     "ระบุรายการตรวจเพิ่มตามโรงพยาบาล",
   );
+  requireRule(
+    input.result !== "COMPLETE" || !input.pendingItems.trim(),
+    "ผลครบต้องไม่มีรายการรอตรวจเพิ่ม",
+    "VALIDATION_ERROR",
+  );
   health.resultStatus = input.result;
   health.pendingItems = input.pendingItems;
   health.evidenceDocumentIds = input.evidenceDocumentIds;
@@ -854,6 +887,11 @@ function confirmMedicalCertificate(
     "ยังมีผลตรวจคงค้าง",
   );
   requireRule(!health.certificateDocumentId, "มีใบรับรองแล้ว", "CONFLICT");
+  requireRule(
+    input.issuedAt >= health.examDate,
+    "วันออกใบรับรองต้องไม่ก่อนวันที่ตรวจ",
+    "VALIDATION_ERROR",
+  );
   const id = allocate(data);
   data.documents.push({
     id,
@@ -938,6 +976,94 @@ function resolveCorrection(data: DemoData, actor: Actor, raw: unknown) {
   correction.version++;
   return correction.id;
 }
+function changeDocumentLink(
+  data: DemoData,
+  actor: Actor,
+  raw: unknown,
+  unlink: boolean,
+) {
+  employer(actor);
+  const input = z
+    .strictObject({
+      ...updateFields,
+      documentSetId: idSchema,
+      documentId: idSchema,
+    })
+    .parse(raw);
+  const stage = findStage(data, actor, input.documentSetId);
+  currentVersion(stage.version, input.expectedVersion);
+  requireRule(
+    ["NOT_DECIDED", "ADDITIONAL_DOCUMENTS"].includes(
+      stage.application.decisionStatus,
+    ),
+    "คำร้องนี้ไม่เปิดแก้ชุดเอกสาร",
+  );
+  evidence(data, stage.employmentId, [input.documentId]);
+  if (unlink)
+    stage.items = stage.items
+      .filter((i) => i.requirementKey !== "linked-" + input.documentId)
+      .map((i) =>
+        i.documentId === input.documentId ? { ...i, documentId: null } : i,
+      );
+  else if (!stage.items.some((i) => i.documentId === input.documentId))
+    stage.items.push({
+      requirementKey: "linked-" + input.documentId,
+      label:
+        data.documents.find((d) => d.id === input.documentId)?.title ??
+        "เอกสารเพิ่มเติม",
+      required: false,
+      documentId: input.documentId,
+    });
+  stage.readinessStatus = stage.items.some((i) => i.required && !i.documentId)
+    ? "NOT_READY"
+    : "AWAITING_REVIEW";
+  stage.version++;
+  return stage.id;
+}
+function addRequestedDocuments(data: DemoData, actor: Actor, raw: unknown) {
+  employer(actor);
+  const input = z
+    .strictObject({
+      ...updateFields,
+      applicationId: idSchema,
+      documentSetExpectedVersion: z.number().int().positive(),
+      requestedItemIds: z.array(requiredText).min(1),
+      documentIds: z.array(idSchema).min(1),
+    })
+    .parse(raw);
+  const stage = data.stages.find(
+    (s) => s.application.id === input.applicationId,
+  );
+  requireRule(stage, "ไม่พบคำร้อง", "NOT_FOUND");
+  scopedEmployment(data, actor, stage.employmentId);
+  currentVersion(stage.application.version, input.expectedVersion);
+  currentVersion(stage.version, input.documentSetExpectedVersion);
+  requireRule(
+    stage.application.decisionStatus === "ADDITIONAL_DOCUMENTS",
+    "ไม่มีรายการเอกสารที่ขอเพิ่ม",
+  );
+  requireRule(
+    input.requestedItemIds.length === input.documentIds.length &&
+      new Set(input.requestedItemIds).size === input.requestedItemIds.length,
+    "รายการเอกสารไม่ตรงกัน",
+  );
+  evidence(data, stage.employmentId, input.documentIds);
+  input.requestedItemIds.forEach((key, index) => {
+    const item = stage.items.find(
+      (i) => i.requirementKey === key && key.startsWith("additional-"),
+    );
+    requireRule(item, "ไม่พบรายการที่ขอเพิ่ม", "NOT_FOUND");
+    item.documentId = input.documentIds[index];
+  });
+  stage.readinessStatus = "AWAITING_REVIEW";
+  stage.version++;
+  stage.application.version++;
+  stage.application.history.push({
+    label: "แนบเอกสารเพิ่ม รอตรวจทานและบันทึกหลักฐานยื่น",
+    at: new Date().toISOString(),
+  });
+  return stage.application.id;
+}
 export function applyOperation(
   data: DemoData,
   actor: Actor,
@@ -946,6 +1072,12 @@ export function applyOperation(
   grants: { entry: boolean; medical: boolean },
 ) {
   switch (name) {
+    case "linkDocument":
+      return changeDocumentLink(data, actor, input, false);
+    case "unlinkDocument":
+      return changeDocumentLink(data, actor, input, true);
+    case "addRequestedDocuments":
+      return addRequestedDocuments(data, actor, input);
     case "saveWorkerEmployment":
       return saveWorkerEmployment(data, actor, input);
     case "createDocumentSet":

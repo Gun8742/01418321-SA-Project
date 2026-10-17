@@ -50,7 +50,12 @@ export function failure(error: unknown, requestId = crypto.randomUUID()) {
         error: {
           code: "VALIDATION_ERROR",
           message: "กรุณาตรวจข้อมูล",
-          fieldErrors: Object.fromEntries(error.issues.map(issue => [issue.path.join(".") || "_form", [issue.message]])),
+          fieldErrors: Object.fromEntries(
+            error.issues.map((issue) => [
+              issue.path.join(".") || "_form",
+              [issue.message],
+            ]),
+          ),
           retryable: false,
         },
         requestId,

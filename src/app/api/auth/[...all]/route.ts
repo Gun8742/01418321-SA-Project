@@ -11,10 +11,19 @@ async function handle(
     return Response.json({ error: "Not found" }, { status: 404 });
   let response: Response;
   try {
-    requireBackend(); requireSameOrigin(request);
+    requireBackend();
+    requireSameOrigin(request);
     const bytes = await readBody(request);
-    response = await authentication().handler(new Request(request.url, { method: request.method, headers: request.headers, body: new Uint8Array(bytes).buffer }));
-  } catch (error) { return failure(error); }
+    response = await authentication().handler(
+      new Request(request.url, {
+        method: request.method,
+        headers: request.headers,
+        body: new Uint8Array(bytes).buffer,
+      }),
+    );
+  } catch (error) {
+    return failure(error);
+  }
   const headers = new Headers(response.headers);
   headers.delete("content-length");
   headers.set("Cache-Control", "private, no-store");

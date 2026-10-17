@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-export const idSchema = z.string().regex(/^[1-9]\d*$/, "รหัสข้อมูลไม่ถูกต้อง");
+export const idSchema = z
+  .string()
+  .regex(/^[1-9]\d*$/, "รหัสข้อมูลไม่ถูกต้อง")
+  .max(19)
+  .refine(
+    (id) => id.length < 19 || (id.length === 19 && id <= "9223372036854775807"),
+    "รหัสเกินขอบเขต BIGINT",
+  );
 export const requiredText = z
   .string()
   .trim()
@@ -59,7 +66,11 @@ export const workerSchema = profileSchema.extend({
   id: idSchema,
   version: z.number().int(),
 });
+// Read DTO permits redacted company details; writes still use employmentFieldsSchema.
 export const employmentSchema = employmentFieldsSchema.extend({
+  registrationNo: z.string(),
+  employerAddress: z.string(),
+  employerContact: z.string(),
   id: idSchema,
   workerId: idSchema,
   employerId: idSchema,
@@ -204,6 +215,9 @@ export type DemoData = z.infer<typeof demoDataSchema>;
 export type OperationName =
   | "saveWorkerEmployment"
   | "createDocumentSet"
+  | "linkDocument"
+  | "unlinkDocument"
+  | "addRequestedDocuments"
   | "savePreparation"
   | "reviewDocumentSet"
   | "recordSubmission"

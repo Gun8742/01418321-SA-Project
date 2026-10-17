@@ -182,6 +182,8 @@ model Employer {
 }
 
 model Worker {
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   id                BigInt         @id
   version           Int            @default(1)
   name              String
