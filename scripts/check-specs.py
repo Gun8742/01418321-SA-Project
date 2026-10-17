@@ -93,12 +93,12 @@ def check_backend(coverage, examples):
     classes = [name for group in coverage["classes"].values() for name in group]
     operations = coverage["operations"]
     rows = coverage["ucCoverage"]
-    review = (SPECS / "backend/class-diagram-review.md").read_text()
+    review = (SPECS / "backend/class-diagram-review.md").read_text(encoding="utf-8")
     contracts = "\n".join(
-        (SPECS / "backend" / name).read_text()
+        (SPECS / "backend" / name).read_text(encoding="utf-8")
         for name in ("operations.md", "infrastructure.md")
     )
-    verification = (SPECS / "backend/verification.md").read_text()
+    verification = (SPECS / "backend/verification.md").read_text(encoding="utf-8")
     if len(classes) != 35 or len(set(classes)) != 35:
         errors.append("backend: expected 35 distinct reviewed class names")
     for name in classes:
@@ -172,8 +172,8 @@ def main():
             errors.append(f"acceptance.md: missing acceptance ID for {uc}")
     manifest = json.loads((SPECS / "source-manifest.json").read_text(encoding="utf-8"))
     errors.extend(check_sources(manifest))
-    coverage = json.loads((SPECS / "backend/coverage.json").read_text())
-    backend_examples = json.loads((SPECS / "backend/contract-examples.json").read_text())
+    coverage = json.loads((SPECS / "backend/coverage.json").read_text(encoding="utf-8"))
+    backend_examples = json.loads((SPECS / "backend/contract-examples.json").read_text(encoding="utf-8"))
     errors.extend(check_backend(coverage, backend_examples))
     unknown = copy.deepcopy(coverage)
     unknown["ucCoverage"][0]["operations"] = ["notAnOperation"]

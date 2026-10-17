@@ -28,8 +28,8 @@ Document ใช้ application/entry/health links ตาม purpose; supporting 
 | ChecklistItem | requirementKey/applicability/document refs/checkResult/remark/reviewer/time | checkedAt/reviewer nullable ก่อนตรวจ; required เมื่อมีผล review จริง |
 | Application | submissionStatus แยก decisionStatus, authority/channel, receiptNo/submittedAt/decidedAt, current round | nullable ก่อน event; SUBMITTED ต้อง acceptance evidence ตาม case; ไม่ตั้ง decidedAt ตอนแค่ PENDING |
 | Document | title/type/private storage object/version/checksum/size/MIME, conditional issue/expiry/validFrom, collection details | fileUri เดิมเป็น private reference ไม่ public URL; VISA UC-11 ต้องไฟล์; supporting upload บางชนิดไม่มีเลข/วันหมดอายุ |
-| EntryRecord | planned arrival/mode/flight/port และ actual arrival/decision/reason/permittedUntil แยกกัน | old travelDate ต้องระบุ mapping ไม่ใส่ planned date เป็น actual; DENIED/PENDING ไม่เปิด medical |
-| HealthCheck | hospital/exam/result/pending items/followup, certificate verification actor/time/identity | verifiedAt nullable ก่อนตรวจ; COMPLETE ไม่พอถ้าไม่มี certificate |
+| EntryRecord | planStatus DRAFT/CONFIRMED, planned arrival/mode/flight/port และ actual arrival/decision/reason/permittedUntil แยกกัน | plan fields nullable ใน DRAFT; CONFIRMED ต้องครบตาม mode; old travelDate ไม่ใช้แทน actual; DRAFT บันทึกผลเข้าเมืองไม่ได้ |
+| HealthCheck | hospital/exam/result/pending items/followup, certificate verification actor/time/identity | เสนอ UNIQUE entry_id (หนึ่ง health episode ต่อ entry ใน v1); update นัดต้อง PENDING และไม่มีผล/ใบรับรอง; สถานะ locked ไม่ reset |
 | DocumentReceipt | actual receivedAt/channel/confirmedByAccountId | immutable actual receipt, Worker/document links; ไม่ใช้ viewedAt แทน |
 | Mutable aggregates | version integer >=1, createdAt/updatedAt | optimistic compare-and-increment; timestamps Server-generated เว้นวัน event ตามหลักฐาน |
 
@@ -46,6 +46,7 @@ exact lengths, auth-native identifiers และ evidence/correction physical la
 | application_event | application/round/event type/status observation, eventAt/recordedAt/actor/reason/evidence links | followup/decision trace โดยไม่ลบผลเก่า; เป็น history log ไม่ใช่ event-sourcing framework |
 | application_requested_item | application/round/item key/reason, supplied document refs, resolved-by-resubmission refs | additional documents ในคำร้องเดิม, ไม่ตีความ upload เป็น authority acceptance |
 | evidence links | typed FK target + document_id + purpose; UNIQUE target/document/purpose | accepted/decision/issued/entry/medical evidence แยกกัน; same Worker/scope check |
+| application_issued_document | composite PK (application_id, document_type), document_id UNIQUE FK | issued slot หนึ่งรายการต่อ Application/type; ไม่มี replacement/reissue จน O-07; supporting/evidence Documents ไม่ถูกนับเป็น slot |
 | correction_request | target typed FK/XOR, reporter, reason, state, resolution, timestamps/version | W10 และการแจ้งข้อมูลบันทึกผิด; valid target เพียงหนึ่งประเภท |
 | scoped capability assignment | account, capability, Worker/Employment scope, issued/revoked/expiry | provision/revoke ที่ตรวจได้ ไม่ Client-granted |
 | upload reservation | uploadId, actor/scope/purpose, generated key, expected/actual size/type/checksum, expiry, status, documentId? | bind file bytes กับผู้เริ่ม upload และ complete ครั้งเดียว |
@@ -63,7 +64,9 @@ operation_receipt ไม่เก็บ raw input, password, file bytes หร�
 | Preparation/link/review | current policy/fields, complete file metadata, set/version + linked doc versions | set/checklist/joins/review snapshot/version, receipt |
 | Submission/resubmission | READY reviewed content, application existing status/version, evidence | one Application, round/event/evidence/submitted snapshot, versions/receipt |
 | Decision | confirmed submission/current round/version, scope/evidence | status+date/reason, event/requested items/evidence, version/receipt |
-| Issued document | APPROVED application/version, Worker/type/file evidence | Document+links/availability/event, versions/receipt |
+| Issued document | APPROVED application/version, Worker/type/file evidence, no existing issued slot | Document+issued slot+links/availability/event, versions/operation receipt; UNIQUE slot violation rollback ทุก write |
+| Travel plan | scoped Visa, mode, current planStatus/entryResult/version; CONFIRM completeness | fields+planStatus+version/operation receipt atomic; CONFIRM fail ไม่เปลี่ยน draft/confirmed plan เดิม |
+| Health visit | ALLOWED entry, unique entry episode, PENDING without results/certificate, version | เฉพาะ visit fields+version/operation receipt; locked guard กับผล/certificate ต้องอยู่ใน transaction เดียวกัน |
 | Actual receipt | owner/approval/issued availability, existing receipt | receipt once + operation receipt; no download side effect |
 | Entry/Health | capability currently active, same Worker, upstream gate/version | result/certificate/evidence/event/version/dependent draft invalidation/receipt |
 | Correction resolution | existing correction and target version, original target policy | allowed recorded patch/history + correction RESOLVED + invalidation + versions/receipt |

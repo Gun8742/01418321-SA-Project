@@ -51,7 +51,7 @@ Auth endpoint อาจใช้ library-native response; adapter ต้อง m
 | ChecklistItem | id, requirementKey, label, required, applicability, checkResult, missingReason?, documentIds |
 | ApplicationDetail | id, documentSetId, submissionStatus, decisionStatus, authority?, receiptNo?, submittedAt?, decidedAt?, evidence references, requestedItems, version, blockers/actions |
 | DocumentSummary | id, type, title, owner, metadata, availability, receipt summary?, actions; ไม่มี file_uri/storage key |
-| EntryDetail | id, workerId, visaDocumentId, plan, actual result/evidence, entryResult, version, blockers/actions |
+| EntryDetail | id, workerId, visaDocumentId, plan, planStatus: DRAFT/CONFIRMED, actual result/evidence, entryResult, version, blockers/actions |
 | HealthDetail | id, workerId, entryId, hospital/visit/result/followup, certificateDocumentId?, resultStatus, version, blockers/actions |
 | ReceiptDetail | id, documentId, workerId, receivedAt, channel, confirmedByAccountId |
 | CorrectionDetail | id, targetType/id, reason, evidence refs, status, resolution?, reportedAt, resolvedAt?, version |
@@ -71,7 +71,8 @@ SubmissionInput: applicationId หรือ documentSetId, authority/submittedAt
 DecisionInput: applicationId, decision, decidedAt, evidenceDocumentIds, reason?, requestedItems?
 IssuedDocumentInput: applicationId, metadata, uploadId? หรือ physical evidence references/channel
 ReceiptInput: documentId, receivedAt, channel, confirmation: true
-TravelPlanInput: visaDocumentId, plannedArrivalAt, travelMode, flightNo? (required ถ้าเครื่องบิน), port, travelEvidenceDocumentIds
+TravelPlanInput: mode: DRAFT/CONFIRM, visaDocumentId, entryId?/expectedVersion? เมื่อ update, requestId; DRAFT ยอม omitted plan fields ที่ยังไม่ครบ แต่ validate ทุกค่าที่ส่ง; CONFIRM ต้อง plannedArrivalAt/travelMode/port/travelEvidenceDocumentIds และ flightNo เมื่อ AIR
+TravelPlanOutput: planStatus DRAFT/CONFIRMED แยกจาก entryResult PLANNED; CONFIRM ไม่ครบไม่ commit; recordEntryResult รับเฉพาะ CONFIRMED และไม่เปลี่ยน DRAFT เป็นผลเข้าเมืองโดยตรง
 EntryResultInput: entryId, result: ALLOWED/DENIED/PENDING_VERIFICATION, actualArrivalAt?, decisionAt?, reason?, permittedUntil?, evidenceDocumentIds
 HealthInput: entryId หรือ healthCheckId, visit/result/certificate fields แยก operation; certificate มี issuedAt, doctorName และ certificateNo เมื่อมี
 CorrectionInput: targetType (VISA/ENTRY/WORK_PERMIT), targetId, reason, evidenceDocumentIds

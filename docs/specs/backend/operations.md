@@ -109,36 +109,49 @@ addRequestedDocuments input: applicationId, requestedItemIds, documentIds, expec
 ต้อง ADDITIONAL_DOCUMENTS และ item เป็นของรอบปัจจุบัน; เพิ่มเอกสารในชุดเดิม + invalidate review
 การแนบยังไม่ปิด requested item ว่าหน่วยงานยอมรับ จนยืนยัน resubmission ตามหลักฐาน; เก็บ item/evidence history
 
-attachIssuedDocument input: applicationId, type: VISA/WORK_PERMIT/APPROVAL_LETTER, metadata, uploadId หรือ documentId ที่ยังไม่ผูก issued role, collectionDetails?, correctionReason?, expectedVersion, requestId
+attachIssuedDocument input: applicationId, type: VISA/WORK_PERMIT/APPROVAL_LETTER, metadata, uploadId หรือ documentId ที่ยังไม่ผูก issued role, collectionDetails?, expectedVersion, requestId
 metadata: holderName/passportNo ตามหลักฐาน, documentNo เมื่อมี, issuer, issuedAt, validFrom?, expiresAt?, visaType? หรือ permit particulars ตามแบบ
 VISA/WORK_PERMIT ต้อง APPROVED, type ตรงคำร้อง/Worker/Employment, date range ถูกต้อง และเอกสารออกจริงพร้อมใช้
 UC-11 ต้องแนบ Visa file ที่อ่านได้ตาม revised Description; collection details อย่างเดียวใช้เปิด Visa receipt ไม่ได้
 APPROVAL_LETTER ใช้ pre-arrival APPROVED, เป็นหนังสือจริงสำหรับ UC-05 ไม่แปลงเป็น Visa
 Work Permit physical channel ต้องมี verified issued-document evidence พร้อมข้อมูลรับตาม O-05; ไม่มี evidence คง approved-not-ready
-Transaction สร้าง/link Document และ event พร้อมกัน; การแก้ metadata สำเนาต้อง reason/history/policy และไม่แก้ต้นฉบับหรือ receipt เดิม
+เป็น create-only operation: ตรวจ issued slot UNIQUE (applicationId, type) ภายใน transaction ก่อนสร้าง/link Document และ event; ไม่ใช่แค่ตรวจ requestId ซ้ำ
+ถ้ามี slot แล้ว คำขอที่ใช้ requestId ใหม่คืน CONFLICT พร้อม blocker ISSUED_DOCUMENT_EXISTS แม้ metadata/file เหมือนเดิม; ไม่สร้างหรือแทน Document, slot หรือ Receipt
+replay requestId เดิมที่ commit แล้วคืน committed reference ตามกฎ replay ก่อนตรวจ version/slot; สอง requestId ที่แข่งกันมีผู้สร้าง slot สำเร็จอย่างมากหนึ่งราย โดย DB uniqueness เป็น backstop
+correctionReason ไม่ใช่ทางข้าม guard: การแก้ recorded metadata/replacement/reissue ต้องใช้ correction policy/history แยกตาม O-07; ยังไม่เปิด reissue operation และไม่เปลี่ยน issued slot/receipt เดิม
 
 ## UC-07/UC-10: Receipt
 
 confirmReceipt input: documentId, receivedAt (actual datetime), channel, confirmation: true, requestId
 Output: ReceiptDetail; derive workerId และ document type จาก DB; Worker ยืนยันของตน ไม่ยืนยันแทนจาก Employer
 ตรวจ APPROVED, issued document พร้อมจริง, receivedAt ไม่อนาคต และไม่ก่อนการออกเอกสารตามหลักฐาน
+documentId ต้องเป็น Document ของ issued slot ใน Application/type นั้น ไม่ใช่ supporting upload หรือสำเนาที่แนบเพิ่มนอก slot
 immutable receipt UNIQUE documentId; identical normalized facts คืน receipt เดิม แม้ requestId ต่าง; รายละเอียดต่างคืน CONFLICT
 download, collection details หรือ unsuccessful delivery ไม่สร้าง receipt; ไม่เก็บ file bytes ใน operation receipt
 
 ## UC-08: Entry
 
-saveTravelPlan input: entryId? (update), visaDocumentId, plannedArrivalAt, travelMode, port, flightNo? (required เมื่อ AIR), travelEvidenceDocumentIds, expectedVersion? เมื่อ update, requestId
-Output: EntryDetail PLANNED; ต้อง Visa ของ Worker ตนพร้อมใช้/ตาม gate ที่เสนอ และหลักฐานการเดินทางครบก่อนยืนยัน plan
-plan อาจ draft ไม่ครบได้แต่ยืนยันไม่ผ่าน; ไม่เปลี่ยน existing ALLOWED/DENIED กลับ PLANNED จาก form เก่า
+saveTravelPlan input เป็น discriminated union ตาม mode: DRAFT | CONFIRM (required), มี visaDocumentId, entryId? (update), expectedVersion? เมื่อ update และ requestId ทั้งสอง mode
+DRAFT: plannedArrivalAt?, travelMode?, port?, flightNo?, travelEvidenceDocumentIds? ไม่บังคับครบ แต่ทุกค่าที่ส่งมาต้องผ่านชนิด/รูปแบบ/ownership validation; ไม่ยอมรับ enum/date/file ที่ผิดเพียงเพราะเป็น draft
+CONFIRM: plannedArrivalAt, travelMode, port, travelEvidenceDocumentIds ต้องครบตามกรณี และ flightNo required เมื่อ AIR; ตรวจเอกสารและ Visa gate จากข้อมูลจริงก่อน commit
+Output: EntryDetail มี planStatus: DRAFT | CONFIRMED แยกจาก entryResult: PLANNED; CONFIRMED หมายถึงยืนยันแผนเท่านั้น ไม่ใช่อนุญาตเข้าประเทศ
+create DRAFT → planStatus DRAFT; create/update CONFIRM ที่ผ่าน → CONFIRMED; ถ้าไม่ครบคืน VALIDATION_ERROR และคง plan/status/version เดิม (create ที่ล้มเหลวไม่สร้าง record)
+แก้แผน CONFIRMED ได้ด้วย mode CONFIRM และตรวจครบใหม่เท่านั้น; ส่ง DRAFT ทับ CONFIRMED คืน PRECONDITION_FAILED ไม่ downgrade; entryResult ที่ไม่ใช่ PLANNED ปฏิเสธ saveTravelPlan ทั้งสอง mode
 recordEntryResult input: entryId, result: PENDING_VERIFICATION/ALLOWED/DENIED, actualArrivalAt?, port?, reason?, permittedUntil?, decisionAt?, evidenceDocumentIds, expectedVersion, requestId
 ต้อง scoped entry:record-evidence; ALLOWED/DENIED ต้อง actual date/result/official evidence, DENIED ต้อง reason
+ต้องมี planStatus CONFIRMED ก่อน recordEntryResult ทุกผล; แผน DRAFT คืน PRECONDITION_FAILED พร้อม blocker TRAVEL_PLAN_UNCONFIRMED โดยไม่เขียนผล/หลักฐาน
 ไม่มีหลักฐานผลเก็บ PENDING_VERIFICATION; ALLOWED เปิด medical; DENIED ปิดเส้นทาง ไม่ลบ plan/history
 แก้ผลปลายทางผ่าน correction policy O-07; นายจ้าง/ลูกจ้างอ่านและแจ้งข้อมูลผิด ไม่แก้คำตัดสินเอง
 
 ## UC-09: Medical
 
 saveHealthVisit input: healthCheckId? (update), entryId, hospitalName, examDate, expectedVersion? เมื่อ update, requestId
-Output: HealthDetail PENDING; Worker ตน, entry ALLOWED same Worker, date ไม่ก่อน actual entry สำหรับกรณีนี้
+Create: HealthDetail PENDING; Worker ตน, entry ALLOWED same Worker, date ไม่ก่อน actual entry สำหรับกรณีนี้
+Update ทำได้เฉพาะ resultStatus PENDING และยังไม่มี recorded healthResult/result evidence, pending test results หรือ certificate link/verification; ตรวจ guard และ expectedVersion ใน transaction เดียวกับการแก้นัด
+ถ้า ADDITIONAL_TESTS/COMPLETE หรือมีผล/ใบรับรองบันทึกแล้ว คืน PRECONDITION_FAILED พร้อม blocker HEALTH_VISIT_LOCKED; ไม่เปลี่ยน hospital/examDate/result/status/certificate หรือ downstream gate
+การ update ที่อนุญาตแก้เฉพาะข้อมูลนัด ไม่ reset ผลหรือใบรับรอง; นัดติดตามจากผลตรวจใช้ followUpAt ใน recordHealthResult ตามสิทธิ์ ไม่ใช้ saveHealthVisit ย้อนผลเป็น PENDING
+การแก้ข้อมูลหลังล็อกต้อง policy/correction ที่อนุมัติแยกตาม O-07; Worker ไม่ได้สิทธิ์ reset ด้วย requestId ใหม่หรือการละ healthCheckId เพื่อสร้างรายการทดแทน (same entry มี health episode เดียวใน v1)
+Create ที่ entryId มี health episode อยู่แล้วคืน CONFLICT พร้อม blocker HEALTH_VISIT_EXISTS และ reference เฉพาะที่ผู้ใช้มีสิทธิ์; ไม่สร้าง episode ซ้ำแม้ requestId ใหม่
 recordHealthResult input: healthCheckId, healthResult (ตามเอกสาร), resultStatus: PENDING/ADDITIONAL_TESTS/COMPLETE, pendingItems, followUpAt?, evidenceDocumentIds, expectedVersion, requestId
 ต้อง scoped medical:record-evidence; additional tests มีรายการตามคำแนะนำโรงพยาบาล; COMPLETE ต้องไม่มี pending items; ไม่วินิจฉัยจาก text/code เอง
 confirmMedicalCertificate input: healthCheckId, certificateDocumentId หรือ uploadId, certificateNo?, issuedAt, doctorName, hospitalName, examinedIdentity, expectedVersion, requestId

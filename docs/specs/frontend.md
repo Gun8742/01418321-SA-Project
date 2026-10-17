@@ -59,6 +59,8 @@ Components ที่ใช้ซ้ำ: AppShell, navigation ตาม Actor, St
 ห้ามแสดง success ก่อน Server commit; error คงข้อมูลกรอกและ status เดิม; กรณี outcome ไม่แน่ชัดให้ reload/reconcile ก่อน retry
 แสดง error ใกล้ field พร้อม summary และย้าย focus ไป error แรก; disabled action มีเหตุผลและทางแก้จาก blockingReasons
 Submit ซ้ำขณะ saving ถูกยับยั้งใน UI แต่ Server ต้องป้องกันซ้ำด้วย
+Travel มี action บันทึก draft (mode DRAFT) และยืนยันแผน (mode CONFIRM); แสดง planStatus แยกจากผลเข้าเมืองและ field errors เมื่อยืนยันไม่ครบ
+Health visit ที่มีผล/ใบรับรองแล้วแสดง read-only พร้อมเหตุผล HEALTH_VISIT_LOCKED; UI ไม่ส่งนัดใหม่เพื่อ reset ผล ส่วน issued document ที่มี slot แล้วใช้ข้อมูลเดิมและรอ correction/reissue policy ไม่แสดง action แนบซ้ำเป็นเอกสารใหม่
 
 ## Accessibility และ Responsive
 

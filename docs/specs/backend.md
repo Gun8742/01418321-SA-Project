@@ -31,12 +31,12 @@ Shared schema/DTO เป็น pure types/validation; module อื่นเร�
 | recordSubmission | UC-01/03/11 | setId, submission draft/evidence, expectedVersion, requestId | application เดียวต่อ set; evidence ไม่ครบคง awaiting confirmation |
 | recordDecision | UC-01/03/11 | applicationId/decision/evidence/reason, expectedVersion, requestId | ต้อง SUBMITTED; หลักฐานกับผลต้องเป็นคำร้องเดียวกัน |
 | addRequestedDocuments | UC-01/03/11 | applicationId, requestedItemIds/documentIds, expectedVersion | คำร้องเดิม; review การแก้ก่อนบันทึก resubmission; เก็บ previous decision evidence |
-| attachIssuedDocument | UC-01/03/11 | applicationId, type, metadata, ready evidence, expectedVersion | APPROVED และเอกสารของ Worker เดียวกัน; approval letter สำหรับ UC-01; ยังไม่สร้าง receipt |
+| attachIssuedDocument | UC-01/03/11 | applicationId, type, metadata, ready evidence, expectedVersion | create-only UNIQUE application/type; existing slot + new requestId → CONFLICT; replay เดิมคืน reference เดิม; reissue รอ O-07 |
 | getOwnOverview, getOwnDocument | UC-07/10 + Summary | active employment/application context | own-safe DTO และ availableActions |
 | confirmReceipt | UC-07/10 documents | documentId/receivedAt/channel/confirmation, requestId | unique receipt/document; actual confirmation เท่านั้น |
-| saveTravelPlan | UC-08 travel | visaDocumentId, plan, expectedVersion | PLANNED; ไม่สร้างผล ALLOWED |
+| saveTravelPlan | UC-08 travel | mode DRAFT/CONFIRM, visaDocumentId, plan, expectedVersion | planStatus DRAFT/CONFIRMED แยกจาก entryResult PLANNED; CONFIRM ต้องครบ; draft ไม่เปิด recordEntryResult |
 | recordEntryResult | UC-08 travel | entryId/result/decisionAt/evidence, expectedVersion | scope + entry:record-evidence capability; DENIED ปิดเส้นทาง |
-| saveHealthVisit | UC-09 medical | entryId/hospital/visit, expectedVersion | ALLOWED evidence gate; บันทึกนัด/visit ไม่ยืนยันใบรับรอง |
+| saveHealthVisit | UC-09 medical | entryId/hospital/visit, expectedVersion | ALLOWED gate; update เฉพาะ PENDING ที่ยังไม่มีผล/ใบรับรอง; มิฉะนั้น HEALTH_VISIT_LOCKED ไม่ reset status |
 | recordHealthResult, confirmMedicalCertificate | UC-09 medical | healthCheckId/result/evidence หรือ certificate, expectedVersion | medical:record-evidence capability; ไม่วินิจฉัยเอง |
 | reportCorrection, resolveCorrection | Supporting | target/reason/evidence หรือ correctionId/resolution, expectedVersion | worker แจ้งตนเอง; Employer แก้เฉพาะ scope; ไม่แก้ issued metadata เงียบ ๆ |
 | initiateUpload, completeUpload, authorizeDownload | Shared documents | purpose/size/type/owner context หรือ uploadId/documentId | ตรวจ session/scope/bytes; private file; URL อายุจำกัด |

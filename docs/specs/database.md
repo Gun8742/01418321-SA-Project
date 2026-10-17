@@ -60,3 +60,4 @@ Seed ใช้ข้อมูลสมมติและบัญชี demo ท
 Source images/queries ไม่ใช่หลักฐานว่า SQL/Prisma adapter รองรับ constraints เหล่านี้โดยตรง
 
 รายละเอียด Class → Table, typed case fields, submitted snapshots, evidence records, lock/race handling และ transaction units อยู่ใน [Backend Persistence](backend/persistence.md)
+ข้อเสนอเพิ่มจาก review: issued slot UNIQUE (application_id, document_type), health episode UNIQUE entry_id และ planStatus แยก DRAFT/CONFIRMED; ต้องตรวจ constraints/guards และ migration ตาม lifecycle ก่อนใช้จริง

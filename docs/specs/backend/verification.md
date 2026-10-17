@@ -28,6 +28,10 @@ PR ของเอกสารต้องแสดงผลตรวจเอ�
 | BE-CORRECTION | Supporting | report mismatch, authorized/unauthorized resolve, final result | OPEN ไม่แก้ต้นฉบับ; authorized patch+history+invalidate atomic; unresolved policy คง OPEN |
 | BE-SCALAR | Every boundary | BIGINT เกิน safe integer, leading zeros, date/timezone/พ.ศ., decimal currency | ID/string/วันไม่เสียความหมาย; null-before-event ไม่ใส่ค่าปลอม |
 | BE-OPS | Infrastructure | missing config, storage/DB outage, recovery และ restore rehearsal | fail closed/readiness ตามจริง; no secret logs; backup references เปิดเอกสารได้หลัง restore |
+| BE-VISIT-LOCK | saveHealthVisit | update หลัง COMPLETE, ADDITIONAL_TESTS, recorded result/evidence หรือ certificate; แข่งกับ recordHealthResult/confirmMedicalCertificate; create ใหม่ entry เดิม | locked update ถูกปฏิเสธ, ผล/ใบรับรอง/downstream gate/version คงเดิม; pending ที่ยังไม่มีผลแก้เฉพาะนัดได้; unique entry กัน create bypass |
+| BE-ISSUED-ONCE | attachIssuedDocument | attach ซ้ำด้วย requestId เดิม/ใหม่, สอง key แข่งกัน, และ attach หลัง receipt | replay เดิมคืน slot เดิม; key ใหม่ CONFLICT; DB UNIQUE slot ทำให้สำเร็จอย่างมากหนึ่งราย; Document/Receipt เดิมไม่ถูกเพิ่ม/แทน/reset; reissue รอ O-07 |
+| BE-PLAN-MODE | saveTravelPlan/recordEntryResult | incomplete DRAFT → incomplete CONFIRM → valid CONFIRM; wrong supplied field; DRAFT ทับ confirmed; record result จาก draft | DRAFT เก็บ partial valid fields ได้; invalid CONFIRM/invalid supplied field ไม่เขียน; valid CONFIRM จึง planStatus CONFIRMED แต่ entryResult ยัง PLANNED; draft ไม่เปิดผลเข้าเมือง; confirmed ไม่ downgrade |
+| BE-ENCODING | document checker | run ปกติ และ python3 -X warn_default_encoding -W error::EncodingWarning scripts/check-specs.py | ทุก read_text ระบุ UTF-8 รวม Backend paths ใหม่; ไม่มี locale-dependent read; ไม่อ้างว่าได้ทดสอบ Windows จริงจาก check นี้ |
 
 ## Test layers
 
