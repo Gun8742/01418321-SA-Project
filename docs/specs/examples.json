@@ -1,0 +1,215 @@
+{
+  "synthetic": true,
+  "description": "ข้อมูลสมมติสำหรับ workflow scenarios; IDs ไม่อ้างบุคคลจริง",
+  "scenarios": [
+    {
+      "id": "missing-visa-document",
+      "uc": "UC-06",
+      "submissionStatus": "NOT_SUBMITTED",
+      "decisionStatus": "NOT_DECIDED",
+      "readinessStatus": "NOT_READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "awaiting-submission",
+      "uc": "UC-11",
+      "submissionStatus": "AWAITING_SUBMISSION_CONFIRMATION",
+      "decisionStatus": "NOT_DECIDED",
+      "readinessStatus": "READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": true,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "pending-visa",
+      "uc": "UC-11",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "PENDING",
+      "readinessStatus": "READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "additional-documents",
+      "uc": "UC-11",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "ADDITIONAL_DOCUMENTS",
+      "readinessStatus": "NOT_READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "rejected",
+      "uc": "UC-03",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "REJECTED",
+      "readinessStatus": "READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "approved-not-issued",
+      "uc": "UC-07",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "APPROVED",
+      "readinessStatus": "READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "ready-to-receive",
+      "uc": "UC-07",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "APPROVED",
+      "readinessStatus": "READY",
+      "documentAvailability": "DIGITAL_READY",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": true,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "received",
+      "uc": "UC-10",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "APPROVED",
+      "readinessStatus": "READY",
+      "documentAvailability": "PHYSICAL_READY",
+      "receiptConfirmed": true,
+      "entryResult": "ALLOWED",
+      "resultStatus": "COMPLETE",
+      "certificateVerified": true,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": true,
+        "canPrepareWorkPermit": true
+      }
+    },
+    {
+      "id": "entry-denied",
+      "uc": "UC-08",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "APPROVED",
+      "readinessStatus": "READY",
+      "documentAvailability": "DIGITAL_READY",
+      "receiptConfirmed": true,
+      "entryResult": "DENIED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "additional-tests",
+      "uc": "UC-09",
+      "submissionStatus": "SUBMITTED",
+      "decisionStatus": "APPROVED",
+      "readinessStatus": "READY",
+      "documentAvailability": "DIGITAL_READY",
+      "receiptConfirmed": true,
+      "entryResult": "ALLOWED",
+      "resultStatus": "ADDITIONAL_TESTS",
+      "certificateVerified": false,
+      "workPermitCase": "AFTER_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": true,
+        "canPrepareWorkPermit": false
+      }
+    },
+    {
+      "id": "before-entry-case",
+      "uc": "UC-02",
+      "submissionStatus": "NOT_SUBMITTED",
+      "decisionStatus": "NOT_DECIDED",
+      "readinessStatus": "NOT_READY",
+      "documentAvailability": "MISSING",
+      "receiptConfirmed": false,
+      "entryResult": "PLANNED",
+      "resultStatus": "PENDING",
+      "certificateVerified": false,
+      "workPermitCase": "BEFORE_ENTRY",
+      "expected": {
+        "canSubmit": false,
+        "canReceive": false,
+        "canStartMedical": false,
+        "canPrepareWorkPermit": true
+      }
+    }
+  ]
+}

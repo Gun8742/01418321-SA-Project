@@ -16,6 +16,9 @@ Repository นี้มีโครงสร้าง Directory และเอ�
 
 ก่อนเพิ่ม Feature, Route หรือ Infrastructure ให้อ่าน [Architecture](docs/architecture.md); ก่อนทำ Use Case ให้ดู [Use Case Map](docs/use-case-map.md) เพื่อเลือก Module และหน้าจอที่เกี่ยวข้อง
 
+ก่อน implement ให้อ่าน [Implementation Specifications](docs/specs/README.md), Contract และ Acceptance ของ UC ที่เกี่ยวข้อง พร้อมตรวจ [Open decisions](docs/specs/decisions.md) ที่บล็อกงานนั้น
+ชุด Spec เป็น Draft; ข้อเสนอ implementation ไม่ทับ revised Description และการ merge เอกสารไม่ถือว่าปิด Open decisions แล้ว
+
 Stack ที่เสนอไว้สำหรับเริ่มพัฒนา ยังไม่ใช่สิ่งที่ติดตั้งหรือยืนยันแล้ว:
 
 - Next.js App Router + TypeScript สำหรับ Full-stack application
