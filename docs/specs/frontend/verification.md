@@ -28,4 +28,4 @@ Test IDs อ้าง [Acceptance](../acceptance.md); เงื่อนไข�
 5. เมื่อมีแอปและเครื่องมือจริง ให้รัน formatter/lint/typecheck/component tests/e2e/build ที่เกี่ยวข้อง พร้อมบันทึกคำสั่ง ผล และข้อจำกัด; ห้ามอ้าง scripts ที่ยังไม่มี
 
 Frontend demo ต้องแสดงว่าเป็นข้อมูลสมมติ/จำลองการทำงาน; integrated e2e ใช้บัญชีและ Server จริงเพื่อพิสูจน์ policy
-ผลตรวจเอกสาร `python3 scripts/check-specs.py` แยกจากผลตรวจ UI/runtime; ปัจจุบันยังไม่มี application implementation จึงยังไม่ผ่านเกณฑ์ runtime ในไฟล์นี้
+ผลตรวจเอกสาร `python3 scripts/check-specs.py` แยกจากผลตรวจ UI/runtime; ปัจจุบันมี Mock Frontend และคำสั่งตรวจใน [README](../../../README.md) ส่วน Backend integration/สิทธิ์จริงยังไม่ได้พิสูจน์

@@ -11,8 +11,9 @@
 
 ## Current State and Stack
 
-Repository นี้มีโครงสร้าง Directory และเอกสาร Architecture แล้ว แต่ยังไม่มี application implementation, dependencies หรือคำสั่ง build/test ที่ยืนยันแล้ว ณ วันที่ 17 ตุลาคม 2569
-เมื่อลงมือทำงานครั้งถัดไป ให้ตรวจ manifests, lockfiles และ scripts จริงก่อนใช้คำสั่งหรือเลือก dependency
+Repository นี้มี Mock Frontend แล้ว ณ วันที่ 18 ตุลาคม 2569; คำสั่งและข้อจำกัดอยู่ใน [README](README.md)
+ก่อนแก้ UI หรือ Mock operations ให้อ่าน [Frontend Spec](docs/specs/frontend/README.md) และตรวจ manifests/lockfile/scripts จริง
+Mock เปิดผ่าน NEXT_PUBLIC_ENABLE_MOCK=true เท่านั้น เก็บข้อมูลสมมติใน browser; การเชื่อม Auth/Database/Private Storage จริงยังไม่มี implementation
 
 ก่อนเพิ่ม Feature, Route หรือ Infrastructure ให้อ่าน [Architecture](docs/architecture.md); ก่อนทำ Use Case ให้ดู [Use Case Map](docs/use-case-map.md) เพื่อเลือก Module และหน้าจอที่เกี่ยวข้อง
 
@@ -20,9 +21,10 @@ Repository นี้มีโครงสร้าง Directory และเอ�
 ก่อนทำ Backend, schema หรือ Auth ให้อ่าน [Backend Spec](docs/specs/backend/README.md) และ [Class Diagram review](docs/specs/backend/class-diagram-review.md) เพื่อเทียบ behavior กับ UC/ER ก่อนแปลง analysis classes เป็นโค้ด
 ชุด Spec เป็น Draft; ข้อเสนอ implementation ไม่ทับ revised Description และการ merge เอกสารไม่ถือว่าปิด Open decisions แล้ว
 
-Stack ที่เสนอไว้สำหรับเริ่มพัฒนา ยังไม่ใช่สิ่งที่ติดตั้งหรือยืนยันแล้ว:
+Frontend ติดตั้ง Next.js/React/TypeScript, Zod, Noto Sans Thai, Vitest และ Playwright แล้ว ใช้ CSS Tokens จาก Figma; เวอร์ชันจริงดู package.json/lockfile
+ส่วนต่อไปนี้ยังเป็นตัวเลือกสำหรับ Backend integration หรือ UI เพิ่มเติม ไม่ใช่สิ่งที่ติดตั้งแล้วทั้งหมด:
 
-- Next.js App Router + TypeScript สำหรับ Full-stack application
+- Next.js Server Actions/Route Handlers สำหรับ Full-stack integration เมื่ออนุมัติ Backend แล้ว
 - Tailwind CSS + shadcn/ui สำหรับ UI; React Hook Form + Zod สำหรับแบบฟอร์ม
 - PostgreSQL + Prisma ORM สำหรับข้อมูลและ migrations
 - Better Auth สำหรับ Authentication/Session; ตรวจ Role และสิทธิ์ข้อมูลในฝั่ง Server เพิ่มเติม
@@ -110,3 +112,13 @@ Stack ที่เสนอไว้สำหรับเริ่มพัฒ�
 
 สำหรับ UI ให้ตรวจหน้าจอและ flow ที่แก้ รวมข้อความภาษาไทยยาว การใช้ Keyboard และ error states
 ส่งมอบเมื่อ callers และเอกสารที่ได้รับผลกระทบสอดคล้องกัน พร้อมระบุผลตรวจจริงและข้อจำกัดที่ยังไม่ยืนยัน
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
