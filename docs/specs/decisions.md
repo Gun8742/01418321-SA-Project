@@ -52,3 +52,10 @@ Frontend mock เริ่มได้เมื่อทีมยอมรับ
 | ER มี AUTHORIZED_OFFICER แต่ UI สองกลุ่ม Actor | default deny/no new officer UI | O-02 scoped grants; ไม่เพิ่ม external agency workflow |
 | Query ในบอร์ดเป็น SQL ที่เสนอ | ใช้เพื่อ trace intent ไม่อ้างรันผ่าน | ตรวจ SQL/constraints จริงตอน migrations |
 | Figma แสดง fields/correction ที่ Dictionary ยังไม่มีครบ | schema extensions ที่ระบุใน database.md | O-03/O-07 review ไม่ตัด Requirement ทิ้ง |
+
+
+## Local implementation — 18 ตุลาคม 2569
+
+ผู้ใช้อนุมัติให้พัฒนา Backend แล้ว รุ่น local ใช้ Better Auth/PostgreSQL/Prisma/S3 ตาม [Backend implementation](../backend-implementation.md) พร้อม pinned dependencies และ integration tests O-08 ฝั่ง package setup มี implementation จริงแล้ว ส่วน deployment target ยังไม่ตัดสินใจ
+
+Open decisions ทางธุรกิจยังคงเปิด: ใช้ synthetic DEMO-1 โดย opt-in, scoped grants เริ่ม deny, ปฏิเสธ shared Worker ข้ามบริษัทและ final override/reissue ดู transport mapping และข้อจำกัดของ DTO ในเอกสาร implementation ก่อนเรียก API การอนุมัติให้พัฒนาไม่ใช่การรับรองแบบราชการหรือ production policy
