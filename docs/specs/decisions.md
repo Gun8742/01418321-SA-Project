@@ -36,6 +36,12 @@
 Frontend mock เริ่มได้เมื่อทีมยอมรับ scope/contracts; Backend integrated และ production ต้องเคลียร์ gates ที่เกี่ยวข้องก่อน
 การ merge Spec ไม่ใช่การปิด Open issues โดยอัตโนมัติ
 
+## ผลจาก Class Diagram ที่เพิ่ม
+
+[Class Diagram review](backend/class-diagram-review.md) แสดง mapping ครบทุก Control และความต่าง CD-01–CD-12
+เสนอใช้ VisaDocumentSet/WorkPermitDocumentSet เป็น case policy บน document_set; แยก generic validateAndSave เป็น named operations ตาม transaction จริง
+ข้อมูล Class Diagram ไม่ได้แก้ O-01 เรื่อง Auth, O-02 เรื่องผู้บันทึกผล หรือ O-03 เรื่อง schema/checklist; รายละเอียดใหม่ทั้งหมดใน Backend Spec ยังรอ review
+
 ## ข้อแตกต่างของแหล่งข้อมูล
 
 | Source discrepancy | ใช้อะไรใน Spec | ผลที่ต้องตาม |

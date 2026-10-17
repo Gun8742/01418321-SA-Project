@@ -1,0 +1,365 @@
+{
+  "synthetic": true,
+  "description": "Proposed operation envelopes; only fictional IDs and metadata, no credentials or file bytes. Server ActorContext is not client payload.",
+  "cases": [
+    {
+      "id": "preparation-create",
+      "operation": "createDocumentSet",
+      "request": {
+        "employmentId": "9007199254740993",
+        "type": "VISA",
+        "caseKey": "SYNTHETIC_NON_B_NEW",
+        "visaType": "NON_B",
+        "targetAuthority": "หน่วยงานสมมติ",
+        "submissionCountry": "LA",
+        "workHistory": false,
+        "requestId": "00000000-0000-4000-8000-000000000001"
+      },
+      "response": {
+        "ok": true,
+        "data": {
+          "id": "2001",
+          "employmentId": "9007199254740993",
+          "type": "VISA",
+          "readinessStatus": "NOT_READY",
+          "version": 1,
+          "availableActions": [
+            "savePreparation"
+          ],
+          "blockingReasons": [
+            {
+              "code": "DOCUMENTS_MISSING",
+              "message": "ยังมีเอกสารที่ต้องแนบ"
+            }
+          ]
+        },
+        "requestId": "00000000-0000-4000-8000-000000000001"
+      }
+    },
+    {
+      "id": "visa-awaiting-acceptance",
+      "operation": "recordSubmission",
+      "request": {
+        "documentSetId": "2001",
+        "authority": "หน่วยงานสมมติ",
+        "receiptNo": null,
+        "submittedAt": null,
+        "acceptedEvidenceDocumentIds": [],
+        "expectedVersion": 3,
+        "requestId": "00000000-0000-4000-8000-000000000002"
+      },
+      "response": {
+        "ok": true,
+        "data": {
+          "id": "3001",
+          "documentSetId": "2001",
+          "submissionStatus": "AWAITING_SUBMISSION_CONFIRMATION",
+          "decisionStatus": "NOT_DECIDED",
+          "decidedAt": null,
+          "version": 1,
+          "availableActions": [
+            "recordSubmission"
+          ]
+        },
+        "requestId": "00000000-0000-4000-8000-000000000002"
+      }
+    },
+    {
+      "id": "ready-visa-without-file",
+      "operation": "confirmReceipt",
+      "request": {
+        "documentId": "4001",
+        "receivedAt": "2026-10-17T08:00:00Z",
+        "channel": "DIGITAL",
+        "confirmation": true,
+        "requestId": "00000000-0000-4000-8000-000000000003"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "PRECONDITION_FAILED",
+          "message": "Visa ยังไม่มีไฟล์ที่พร้อมใช้",
+          "blockingReasons": [
+            {
+              "code": "ISSUED_FILE_MISSING",
+              "message": "ให้ผู้รับผิดชอบแนบ Visa จริงก่อน"
+            }
+          ],
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000003"
+      }
+    },
+    {
+      "id": "foreign-document",
+      "operation": "getOwnDocument",
+      "request": {
+        "documentId": "4999"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "NOT_FOUND",
+          "message": "ไม่พบรายการ",
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000004"
+      }
+    },
+    {
+      "id": "stale-review",
+      "operation": "reviewDocumentSet",
+      "request": {
+        "documentSetId": "2001",
+        "checklistVersion": "synthetic-1",
+        "reviewItems": [],
+        "expectedVersion": 2,
+        "requestId": "00000000-0000-4000-8000-000000000005"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "CONFLICT",
+          "message": "ชุดเอกสารเปลี่ยนแล้ว กรุณาโหลดข้อมูลล่าสุด",
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000005"
+      }
+    },
+    {
+      "id": "entry-no-evidence",
+      "operation": "recordEntryResult",
+      "request": {
+        "entryId": "5001",
+        "result": "ALLOWED",
+        "actualArrivalAt": "2026-10-17T07:00:00Z",
+        "decisionAt": "2026-10-17T07:15:00Z",
+        "evidenceDocumentIds": [],
+        "expectedVersion": 1,
+        "requestId": "00000000-0000-4000-8000-000000000006"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "กรุณาแนบหลักฐานผลตรวจ",
+          "fieldErrors": {
+            "evidenceDocumentIds": [
+              "ต้องมีหลักฐานก่อนบันทึกผลอนุญาต"
+            ]
+          },
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000006"
+      }
+    },
+    {
+      "id": "db-write-failure",
+      "operation": "saveHealthVisit",
+      "request": {
+        "entryId": "5001",
+        "hospitalName": "โรงพยาบาลสมมติ",
+        "examDate": "2026-10-17",
+        "requestId": "00000000-0000-4000-8000-000000000007"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "SAVE_FAILED",
+          "message": "บันทึกไม่สำเร็จ กรุณาตรวจสถานะก่อนลองใหม่",
+          "retryable": true
+        },
+        "requestId": "00000000-0000-4000-8000-000000000007"
+      }
+    },
+    {
+      "id": "retry-committed",
+      "operation": "getMutationOutcome",
+      "request": {
+        "operation": "confirmReceipt",
+        "requestId": "00000000-0000-4000-8000-000000000008"
+      },
+      "response": {
+        "ok": true,
+        "data": {
+          "status": "COMMITTED",
+          "operation": "confirmReceipt",
+          "resource": {
+            "receiptId": "6001",
+            "documentId": "4002"
+          },
+          "currentVersions": {}
+        },
+        "requestId": "00000000-0000-4000-8000-000000000009"
+      }
+    },
+    {
+      "id": "visit-locked-after-certificate",
+      "operation": "saveHealthVisit",
+      "request": {
+        "healthCheckId": "7001",
+        "entryId": "5001",
+        "hospitalName": "โรงพยาบาลสมมติ",
+        "examDate": "2026-10-18",
+        "expectedVersion": 4,
+        "requestId": "00000000-0000-4000-8000-000000000010"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "PRECONDITION_FAILED",
+          "message": "มีผลตรวจหรือใบรับรองแล้ว แก้นัดไม่ได้",
+          "blockingReasons": [
+            {
+              "code": "HEALTH_VISIT_LOCKED",
+              "message": "คงผลและใบรับรองเดิม"
+            }
+          ],
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000010"
+      }
+    },
+    {
+      "id": "issued-document-new-key",
+      "operation": "attachIssuedDocument",
+      "request": {
+        "applicationId": "3001",
+        "type": "VISA",
+        "metadata": {
+          "documentNo": "SYNTHETIC-VISA-01",
+          "issuer": "หน่วยงานสมมติ",
+          "issuedAt": "2026-10-17"
+        },
+        "documentId": "4003",
+        "expectedVersion": 5,
+        "requestId": "00000000-0000-4000-8000-000000000011"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "CONFLICT",
+          "message": "คำร้องนี้มี Visa แล้ว",
+          "blockingReasons": [
+            {
+              "code": "ISSUED_DOCUMENT_EXISTS",
+              "message": "ใช้เอกสารเดิม การออกใหม่รอ policy"
+            }
+          ],
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000011"
+      }
+    },
+    {
+      "id": "travel-incomplete-draft",
+      "operation": "saveTravelPlan",
+      "request": {
+        "visaDocumentId": "4001",
+        "mode": "DRAFT",
+        "port": "ท่าอากาศยานสมมติ",
+        "requestId": "00000000-0000-4000-8000-000000000012"
+      },
+      "response": {
+        "ok": true,
+        "data": {
+          "id": "5002",
+          "plan": {
+            "port": "ท่าอากาศยานสมมติ"
+          },
+          "planStatus": "DRAFT",
+          "entryResult": "PLANNED",
+          "version": 1
+        },
+        "requestId": "00000000-0000-4000-8000-000000000012"
+      }
+    },
+    {
+      "id": "travel-incomplete-confirm",
+      "operation": "saveTravelPlan",
+      "request": {
+        "entryId": "5002",
+        "visaDocumentId": "4001",
+        "mode": "CONFIRM",
+        "port": "ท่าอากาศยานสมมติ",
+        "expectedVersion": 1,
+        "requestId": "00000000-0000-4000-8000-000000000013"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "ข้อมูลแผนยังไม่ครบ",
+          "fieldErrors": {
+            "plannedArrivalAt": [
+              "กรุณาระบุวันเดินทาง"
+            ],
+            "travelMode": [
+              "กรุณาระบุช่องทาง"
+            ],
+            "travelEvidenceDocumentIds": [
+              "กรุณาแนบหลักฐาน"
+            ]
+          },
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000013"
+      }
+    },
+    {
+      "id": "travel-confirmed-plan",
+      "operation": "saveTravelPlan",
+      "request": {
+        "entryId": "5002",
+        "visaDocumentId": "4001",
+        "mode": "CONFIRM",
+        "plannedArrivalAt": "2026-10-18T07:00:00Z",
+        "travelMode": "AIR",
+        "port": "ท่าอากาศยานสมมติ",
+        "flightNo": "SYN-001",
+        "travelEvidenceDocumentIds": [
+          "4004"
+        ],
+        "expectedVersion": 1,
+        "requestId": "00000000-0000-4000-8000-000000000014"
+      },
+      "response": {
+        "ok": true,
+        "data": {
+          "id": "5002",
+          "planStatus": "CONFIRMED",
+          "entryResult": "PLANNED",
+          "version": 2
+        },
+        "requestId": "00000000-0000-4000-8000-000000000014"
+      }
+    },
+    {
+      "id": "travel-draft-result-blocked",
+      "operation": "recordEntryResult",
+      "request": {
+        "entryId": "5002",
+        "result": "PENDING_VERIFICATION",
+        "evidenceDocumentIds": [],
+        "expectedVersion": 1,
+        "requestId": "00000000-0000-4000-8000-000000000015"
+      },
+      "response": {
+        "ok": false,
+        "error": {
+          "code": "PRECONDITION_FAILED",
+          "message": "กรุณายืนยันแผนก่อนบันทึกผล",
+          "blockingReasons": [
+            {
+              "code": "TRAVEL_PLAN_UNCONFIRMED",
+              "message": "แผนยังเป็น draft"
+            }
+          ],
+          "retryable": false
+        },
+        "requestId": "00000000-0000-4000-8000-000000000015"
+      }
+    }
+  ],
+  "limitations": "Responses are representative projections, not full DTO schema definitions or database fixtures. Mock readiness is not evidence of integrated authorization."
+}

@@ -9,7 +9,7 @@
 |---|---|
 | เข้าใจเป้าหมาย ขอบเขต และข้อมูลต้นทาง | [Product](product.md) |
 | ทำ Routes, Forms, UI states และ Mock | [Frontend](frontend.md) |
-| ทำ Operations, transactions และ file lifecycle | [Backend](backend.md) |
+| ทำ Operations, transactions และ file lifecycle | [Backend](backend.md) และ [Backend ฉบับละเอียด](backend/README.md) |
 | กำหนด payload ที่ FE/BE ใช้ร่วมกัน | [Data Contract](data-contract.md) และ [ตัวอย่าง JSON](examples.json) |
 | กำหนด transition และเงื่อนไขเปิดขั้นตอน | [Workflows](workflows.md) |
 | กำหนดขอบเขตการเข้าถึงข้อมูล | [Authorization](authorization.md) |
@@ -32,6 +32,7 @@
 ## Baseline และการเปลี่ยนแปลง
 
 - Behavior: revised UC01–UC11; UI: Figma ฉบับปรับ Impeccable; Data: Peter Chen 2 และ Data-Dictionary-Images
+- Class Diagram: PDF ที่เพิ่มใน workspace ตรวจภาพครบ 1 หน้า; [ผลเทียบ Class/UC/ER](backend/class-diagram-review.md) พร้อมข้อแตกต่างและ mapping เข้า Backend
 - ตรวจ ER สดในรอบนี้: 13 Entities และตัวอย่าง Query Q01–Q45; ข้อมูล Query/Dictionary ยังเป็นแบบเสนอ
 - [Source manifest](source-manifest.json) บันทึก SHA256 ของเอกสารใน workspace และลิงก์ Figma; ลิงก์ Figma เป็น mutable reference ไม่ใช่ immutable snapshot
 - พัฒนาแต่ละ UC โดยอ่าน spec ที่เกี่ยวข้องและ Acceptance ID ก่อน เมื่อเปลี่ยน Contract ให้แก้ producer, consumer, Mock และ tests พร้อมกัน

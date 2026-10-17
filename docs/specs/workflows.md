@@ -12,6 +12,7 @@
 | Application.submissionStatus | NOT_SUBMITTED, AWAITING_SUBMISSION_CONFIRMATION, SUBMITTED | ยังไม่ยื่น / รอหลักฐานรับ / ยืนยันรับคำขอแล้ว |
 | Application.decisionStatus | NOT_DECIDED, PENDING, ADDITIONAL_DOCUMENTS, APPROVED, REJECTED | ยังไม่เริ่มรอผล / รอผล / ขอเพิ่ม / อนุมัติ / ไม่อนุมัติ |
 | EntryRecord.entryResult | PLANNED, PENDING_VERIFICATION, ALLOWED, DENIED | แผนเดินทาง / รอหลักฐานผล / อนุญาต / ไม่อนุญาต |
+| EntryRecord.planStatus | DRAFT, CONFIRMED | แผนที่ยังไม่ยืนยัน / แผนที่ตรวจข้อมูลครบและยืนยันแล้ว; ไม่ใช่ผลเข้าเมือง |
 | HealthCheck.resultStatus | PENDING, ADDITIONAL_TESTS, COMPLETE | รอผล / ตรวจเพิ่ม / ผลครบ |
 | DocumentReceipt.confirmationStatus | CONFIRMED | สร้าง record เมื่อยืนยันจริง; ก่อนรับใช้ absence ของ Receipt |
 | CorrectionRequest.status | OPEN, RESOLVED | รับแจ้ง / ตรวจและแก้ข้อมูลบันทึกแล้ว |
@@ -25,20 +26,21 @@ UI label ไม่ใช่ Enum และไม่ต้องใช้ภา�
 | Operation | Preconditions | ผลสำเร็จ / สิ่งที่ไม่ทำ |
 |---|---|---|
 | savePreparation | มีข้อมูลการจ้างและสิทธิ์; ตรวจ gate ของประเภท/กรณีคำขอด้านล่าง | เก็บ draft เป็น NOT_READY หรือ AWAITING_REVIEW; ยังไม่ยื่น |
-| reviewDocumentSet | ทุก required item PASS, ไฟล์พร้อมใช้, metadata ตรงบุคคลและคำขอ | READY พร้อม reviewer/เวลาจาก Session/Server; ไม่อนุมัติคำขอ |
+| reviewDocumentSet | มีสิทธิ์และใช้ Checklist/content version ล่าสุด | ทุก required item PASS, ไฟล์พร้อมและ metadata ตรงจึง READY พร้อม reviewer/Server time; ไม่ครบเก็บผลตรวจไม่ผ่านและ blockers โดยไม่อนุมัติคำขอ |
 | changeReviewedContent | แก้ Field/ไฟล์/Checklist ที่ใช้ยื่น | reset readiness เป็น AWAITING_REVIEW หรือ NOT_READY และต้องตรวจซ้ำ |
 | recordSubmission | มีชุด READY ที่ตรง applicationType; ใช้ Application เดิมสำหรับ follow-up | ถ้าไม่มีเลขรับ/หลักฐานรับ คง AWAITING_SUBMISSION_CONFIRMATION/NOT_DECIDED; ถ้าครบเป็น SUBMITTED/PENDING |
-| recordDecision | การยื่นยืนยันแล้ว มีผลและหลักฐานจากหน่วยงาน | APPROVED/REJECTED/ADDITIONAL_DOCUMENTS; ห้ามใช้ผลที่กรอกเองแทนเอกสารหลักฐาน |
-| attachIssuedDocument | APPROVED และเอกสารออกจริงตรง Worker/Employment/ชนิดคำขอ | เก็บไฟล์/metadata พร้อมใช้; approved อย่างเดียวไม่แปลว่าพร้อมรับ |
+| recordDecision | การยื่นยืนยันแล้ว มีผลและหลักฐานจากหน่วยงานสำหรับผลตัดสิน | APPROVED/REJECTED/ADDITIONAL_DOCUMENTS; PENDING เป็น followup observation ไม่สร้าง final decidedAt; ห้ามใช้ผลที่กรอกเองแทนเอกสารหลักฐาน |
+| attachIssuedDocument | APPROVED และเอกสารออกจริงตรง Worker/Employment/ชนิดคำขอ; ยังไม่มี issued slot (applicationId, type) | create-only; slot ซ้ำจาก requestId ใหม่คืน CONFLICT; replay เดิมคืน reference เดิม; correction/reissue แยกตาม O-07 |
 | confirmReceipt | สิทธิ์ของ Worker, APPROVED และมีช่องทางรับที่พร้อมจริง | สร้าง Receipt ของเอกสาร/Worker นั้น; การเปิด/ดาวน์โหลดไม่เรียก operation นี้ |
-| saveTravelPlan | Worker ของตนมี Visa ที่รับแล้วและใช้เดินทางได้ตามข้อมูลหลักฐาน | PLANNED; ไม่ถือว่าผ่านตรวจเข้าเมือง |
-| recordEntryResult | มี grant บันทึกผลของ Worker นั้น | ไม่มีผลหลักฐานให้ PENDING_VERIFICATION; มีผลจึง ALLOWED/DENIED |
-| saveHealthVisit | Entry ALLOWED ของ Worker เดียวกัน | PENDING; ไม่ยืนยันว่ามีใบรับรองแล้ว |
+| saveTravelPlan | Worker ของตนมี Visa ที่รับแล้วและใช้เดินทางได้; entryResult ยัง PLANNED | mode DRAFT เก็บบาง field, mode CONFIRM ต้องครบจึง planStatus CONFIRMED; ไม่ downgrade confirmed; ผลเข้าเมืองยัง PLANNED |
+| recordEntryResult | มี grant บันทึกผลของ Worker นั้นและ planStatus CONFIRMED | ไม่มีผลหลักฐานให้ PENDING_VERIFICATION; มีผลจึง ALLOWED/DENIED; DRAFT ไม่เปิดทางข้าม confirmation |
+| saveHealthVisit | Entry ALLOWED ของ Worker เดียวกัน; update เฉพาะ PENDING ที่ยังไม่มีผล/หลักฐานผล/ใบรับรอง | create PENDING; update เปลี่ยนเฉพาะนัด ไม่ reset result/certificate; หลังมีผลคืน HEALTH_VISIT_LOCKED โดยไม่เปลี่ยน gate |
 | recordHealthResult | มี grant บันทึกผลและหลักฐานจริง | PENDING/ADDITIONAL_TESTS/COMPLETE ตามข้อมูล; COMPLETE อย่างเดียวไม่สร้างไฟล์ใบรับรอง |
 | confirmMedicalCertificate | มี grant บันทึกผล; ผลครบ ไม่มีรายการรอเพิ่ม ใบรับรองตรงบุคคลและพร้อมใช้ | เปิด certificate สำหรับชุด Work Permit ตามกรณี |
-| resolveCorrection | ผู้รับผิดชอบมีสิทธิ์และตรวจหลักฐานแล้ว | แก้เฉพาะข้อมูลบันทึก พร้อมเหตุผล; ไม่แก้เอกสาร/ผลตัดสินต้นฉบับ |
+| resolveCorrection | Employer ใน Employment scope, คำแจ้ง OPEN/version ตรง, ตรวจหลักฐาน/การดำเนินการที่มีสิทธิ์แล้ว | บันทึกคำตอบ+RESOLVED+ผู้ตอบ/เวลา; ไม่ patch target หรือเพิ่มสิทธิ์แก้ผลภายนอก |
 
 PENDING ไม่ใช่ปุ่มให้ผู้ใช้ย้อนผลสุดท้าย; การแก้ผลที่บันทึกผิดต้องใช้ correction flow พร้อมเหตุผลและตรวจหลักฐาน
+UC-01 ใช้ attachIssuedDocument เก็บหนังสืออนุมัติจริงเพื่อเปิด UC-05; UC-11 ต้องแนบ Visa file จริง ส่วนช่องทางรับ Work Permit ใช้หลักฐานตามกรณี/O-05
 รอบยื่นเอกสารเพิ่มทำใน Application เดิม: เพิ่ม/เปลี่ยนเอกสาร → readiness reset → review → recordSubmission → SUBMITTED/PENDING
 REJECTED ไม่ถูก reset โดยอัตโนมัติ; การดำเนินต่อให้ตรวจคำสั่งหน่วยงานว่าเป็น follow-up ของเดิมหรือคำขอใหม่ก่อนเลือก operation
 ข้อความแจ้งผู้เกี่ยวข้องใน v1 แสดงในหน้าสถานะ ไม่อ้างว่ามี email/SMS ที่ส่งจริง

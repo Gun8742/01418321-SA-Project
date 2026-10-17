@@ -68,3 +68,8 @@ Unified Chen ER มี 13 Entities ข้างต้น และระบุ a
 | Field ที่ Description/UI ใช้แต่ภาพยังไม่แยกคอลัมน์ครบ เช่น วันเกิด อีเมล เลขเที่ยวบิน ช่วงวันมีผล Visa และผู้ตรวจทาน | บันทึก mapping หรือ schema extension ที่จำเป็นอย่างชัดเจนก่อน implement ไม่ตัด Requirement ทิ้งเพราะไม่ปรากฏในภาพ |
 
 ยังไม่ได้สร้าง DDL/Migrations, รัน Query ในฐานข้อมูล หรือยืนยันว่า Auth library ใช้ schema นี้ได้โดยตรง
+
+## Class Diagram เพิ่มเติม
+
+ตรวจ PDF `../../M3LycAAAAAElFTkSuQmCC.pdf` ครบ 1 หน้าแล้ว: Boundary/Control ครบ 11 UC พร้อม Entity subclasses สำหรับ Visa/Work Permit DocumentSet
+ดู [Class Diagram review](specs/backend/class-diagram-review.md) สำหรับ inventory, method mapping และข้อแตกต่าง; subclass ไม่ใช่เหตุให้เพิ่มตารางใหม่ และ Auth entities ใน ER ยังจำเป็นแม้ไม่แสดงใน Class Diagram

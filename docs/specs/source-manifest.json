@@ -113,6 +113,13 @@
     {
       "path": "Report/UI Design/README.md",
       "sha256": "043d3d2c41a4f350b02bca7831f44161ec978940741424a1beedf15cd1b7acec"
+    },
+    {
+      "path": "M3LycAAAAAElFTkSuQmCC.pdf",
+      "sha256": "d05f6bf904295f3fac0214976419b032a70ba37b97f104be30eb11c071e7a52b",
+      "kind": "class-diagram",
+      "pages": 1,
+      "readMethod": "Visual review of full-page render and enlarged regions; no extractable PDF text layer."
     }
   ],
   "figma": {
