@@ -48,3 +48,5 @@ End-to-end: Employer UC-04→01→05→06→11, Worker 07→08→09, Employer 02
 เส้นทางลบ: เอกสารไม่ครบ → แก้ → review ใหม่, additional documents → ติดตามคำร้องเดิม, rejection, entry denied, save failure, session expiry
 ก่อนส่งมอบ: รัน formatter/lint/typecheck/unit/integration/e2e/build ที่ติดตั้งจริง และบันทึกผล/ข้อจำกัด; ไม่มี scripts ไม่ถือว่าผ่าน
 PR ชุดนี้ตรวจเฉพาะความครบ/links/source fingerprints ของ Spec; ไม่ได้พิสูจน์ runtime ตามเกณฑ์ข้างต้น
+
+ตรวจ Backend เพิ่มตาม [Backend Verification](backend/verification.md) ซึ่งจับคู่ BE-UC01–BE-UC11 และ scope/transaction/replay/storage/concurrency cases กับ Class Diagram/operations

@@ -16,6 +16,7 @@
 - [Use Case Map](docs/use-case-map.md) — UC → Module → หน้าจอและพื้นที่ Route
 - [Data Model Sources](docs/data-model.md) — ER ล่าสุด, Actor Login และสถานะเอกสารรายละเอียดข้อมูล
 - [Implementation Specifications](docs/specs/README.md) — Product, Frontend, Backend, Contract, Workflow, สิทธิ์, Database และ Acceptance ครบ UC-01–UC-11; Draft พร้อม Open decisions
+- [Backend Specifications](docs/specs/backend/README.md) — Class Diagram review, operation contracts, persistence/transactions, Auth/private files และ verification
 - [Figma UI Design](https://www.figma.com/design/aBLNdRvl9Z3x8qrhG6x38g) — แบบหน้าจอและ Components
 
 เมื่อเริ่มทำแอป ให้เลือกเวอร์ชันที่เข้ากัน เพิ่ม configuration ที่จำเป็น และบันทึกคำสั่งที่รันได้จริงใน README

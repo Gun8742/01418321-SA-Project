@@ -3,6 +3,9 @@
 สถานะ: Proposed implementation บน Modular Monolith ตาม [Architecture](../architecture.md)
 ยังไม่เลือกรุ่น dependencies และไม่ได้ยืนยัน library APIs; Spec กำหนดพฤติกรรม ไม่ใช่โค้ดที่รันแล้ว
 
+รายละเอียดครบสำหรับ implement อยู่ใน [Backend specification](backend/README.md): [Class Diagram review](backend/class-diagram-review.md), [Operations](backend/operations.md), [Persistence](backend/persistence.md), [Infrastructure](backend/infrastructure.md) และ [Verification](backend/verification.md)
+บทนี้เป็น baseline ภาพรวม; names/inputs ที่เพิ่มมีทะเบียนใน [Coverage](backend/coverage.json) และตัวอย่างใน [Contract examples](backend/contract-examples.json)
+
 ## Boundary และ Dependency
 
 Route/Server Action ทำหน้าที่ parse request → เรียก named application operation → map response
@@ -21,14 +24,14 @@ Shared schema/DTO เป็น pure types/validation; module อื่นเร�
 | Operation | UC / Module | Input สำคัญ | Output / invariant |
 |---|---|---|---|
 | listWorkers, getWorkerEmployment | UC-04 workers/employment | query/page หรือ workerId/employmentId | เฉพาะ Employer scope; count ไม่รวมผู้อื่น |
-| saveWorkerEmployment | UC-04 workers/employment | worker draft, employment draft, expectedVersion, requestId | Worker + Employment บันทึก atomic; ไม่ซ้ำเมื่อ request retry |
+| saveWorkerEmployment | UC-04 workers/employment | worker/employer/employment drafts, expectedVersions ของ records ที่แก้, requestId | Worker + Employer + Employment และ document links บันทึก atomic; ไม่ซ้ำเมื่อ request retry |
 | createDocumentSet, savePreparation | UC-01/02/05 documents + business module | employmentId/type/caseKey หรือ setId/fields, expectedVersion | draft ชุดใหม่; ไม่แทน set ของคำร้องเก่า |
 | linkDocument, unlinkDocument | UC-01/02/05 documents | setId/documentId, expectedVersion | ownership ถูกต้อง; เปลี่ยนหลัง review ต้อง reset readiness |
 | reviewDocumentSet | UC-01/02/06 documents + business module | setId/checklistVersion, expectedVersion | Server ตรวจ required fields/files; READY เฉพาะเมื่อครบ |
 | recordSubmission | UC-01/03/11 | setId, submission draft/evidence, expectedVersion, requestId | application เดียวต่อ set; evidence ไม่ครบคง awaiting confirmation |
 | recordDecision | UC-01/03/11 | applicationId/decision/evidence/reason, expectedVersion, requestId | ต้อง SUBMITTED; หลักฐานกับผลต้องเป็นคำร้องเดียวกัน |
 | addRequestedDocuments | UC-01/03/11 | applicationId, requestedItemIds/documentIds, expectedVersion | คำร้องเดิม; review การแก้ก่อนบันทึก resubmission; เก็บ previous decision evidence |
-| attachIssuedDocument | UC-03/11 | applicationId, metadata, ready evidence, expectedVersion | APPROVED และเอกสารของ Worker เดียวกัน; ยังไม่สร้าง receipt |
+| attachIssuedDocument | UC-01/03/11 | applicationId, type, metadata, ready evidence, expectedVersion | APPROVED และเอกสารของ Worker เดียวกัน; approval letter สำหรับ UC-01; ยังไม่สร้าง receipt |
 | getOwnOverview, getOwnDocument | UC-07/10 + Summary | active employment/application context | own-safe DTO และ availableActions |
 | confirmReceipt | UC-07/10 documents | documentId/receivedAt/channel/confirmation, requestId | unique receipt/document; actual confirmation เท่านั้น |
 | saveTravelPlan | UC-08 travel | visaDocumentId, plan, expectedVersion | PLANNED; ไม่สร้างผล ALLOWED |
@@ -53,7 +56,7 @@ Status update ทั่วไปแบบ setStatus(any string) ไม่อย�
 เมื่อเปลี่ยน child ที่กระทบ readiness ให้เพิ่ม version ของ DocumentSet ใน transaction เดียวกัน
 Conflict คืน CONFLICT กับคำแนะนำ reload; ไม่ overwrite ข้อมูลใหม่ด้วย form เก่า
 requestId ใช้ป้องกัน retry หลัง network timeout: key ผูก actor + operation + requestId, เก็บ payload digest และ result reference ใน transaction
-payload เดิมคืนผลเดิม; reuse key กับ payload ต่างคืน CONFLICT; ยังตรวจสิทธิ์ปัจจุบันก่อนคืนผล
+payload เดิมคืน committed resource reference เดิมและ versions ล่าสุด; reuse key กับ payload ต่างคืน CONFLICT; ตรวจสิทธิ์ปัจจุบันและ replay ก่อน expectedVersion check เพื่อไม่ปฏิเสธ retry ที่ commit ไปแล้ว
 Unique constraints ยังเป็น backstop แม้ UI disable submit แล้ว
 รายละเอียด operation receipt เป็น schema extension ข้อเสนอใน [Database](database.md); ไม่ต้องสร้าง workflow engine/queue ทั่วไป
 

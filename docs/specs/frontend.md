@@ -42,7 +42,7 @@ Summary แสดงรายการ pending ถ้ามีหลายคำ
 | Decision | decision, decidedAt, reference/evidence, reason, requestedItems | เพิ่มเอกสาร/ไม่อนุมัติต้องมีเหตุผล; APPROVED ต้องหลักฐานผล |
 | Issued document | type, documentNo, issuer, issuedAt, validFrom/expiresAt เมื่อมี, file หรือ physical availability evidence | no expiry ใช้ null ตามชนิด; วันเริ่มไม่หลังวันสิ้นสุด; ต้องผูกคำขอและ Worker เดียวกัน |
 | Travel | visaDocumentId, plannedArrivalAt, travelMode, flightNo (เครื่องบิน), port, travel evidence, actualArrivalAt/result/reason/permittedUntil/evidence | แผนเป็น draft; actual result แยก fields/time; รับ DENIED ได้โดยไม่เปิด medical |
-| Health | entryId, hospital, visitedAt, result, pendingItems/followUpAt, certificateNo เมื่อมี/issuedAt/doctorName/certificate | ADDITIONAL_TESTS ต้องคำแนะนำ/นัดตามหลักฐาน; COMPLETE ไม่แปลว่าผ่านการตรวจจนกว่าจะมีใบรับรองที่ยืนยัน |
+| Health | entryId, hospitalName, examDate, result, pendingItems/followUpAt, certificateNo เมื่อมี/issuedAt/doctorName/certificate | ADDITIONAL_TESTS ต้องคำแนะนำ/นัดตามหลักฐาน; COMPLETE ไม่แปลว่าผ่านการตรวจจนกว่าจะมีใบรับรองที่ยืนยัน |
 | Receipt | documentId, receivedAt, channel, confirmation | explicit confirmation; วันไม่อนาคตตาม server clock; document ต้องพร้อมรับ |
 | Correction | resourceType/id, reason, evidenceDocumentIds | required reason; จำกัดประเภท resource; ตรวจสิทธิ์ไฟล์และ resource |
 

@@ -1,0 +1,246 @@
+{
+  "status": "PROPOSED",
+  "source": "../../M3LycAAAAAElFTkSuQmCC.pdf",
+  "classes": {
+    "boundary": [
+      "PreArrivalApplicationView",
+      "WorkPermitDocumentPreparationView",
+      "WorkPermitApplicationView",
+      "EmploymentDataView",
+      "VisaDocumentPreparationView",
+      "VisaDocumentReviewView",
+      "VisaReceiptView",
+      "EntryTrackingView",
+      "HealthCheckView",
+      "WorkPermitReceiptView",
+      "VisaApplicationTrackingView"
+    ],
+    "control": [
+      "PreArrivalApplicationController",
+      "WorkPermitDocumentPreparationController",
+      "WorkPermitApplicationController",
+      "EmploymentDataController",
+      "VisaDocumentPreparationController",
+      "VisaDocumentReviewController",
+      "VisaReceiptController",
+      "EntryTrackingController",
+      "HealthCheckController",
+      "WorkPermitReceiptController",
+      "VisaApplicationTrackingController"
+    ],
+    "entity": [
+      "Employer",
+      "Worker",
+      "Employment",
+      "Application",
+      "DocumentSet",
+      "ChecklistItem",
+      "Document",
+      "DocumentReceipt",
+      "EntryRecord",
+      "HealthCheck",
+      "VisaDocumentSet",
+      "WorkPermitDocumentSet"
+    ],
+    "persistence": [
+      "Database"
+    ]
+  },
+  "operations": [
+    "addRequestedDocuments",
+    "attachIssuedDocument",
+    "authorizeDownload",
+    "cleanupTemporaryUploads",
+    "completeUpload",
+    "confirmMedicalCertificate",
+    "confirmReceipt",
+    "createDocumentSet",
+    "getApplicationDetail",
+    "getCaseChecklist",
+    "getCorrectionDetail",
+    "getEntryResult",
+    "getHealthCheckContext",
+    "getMutationOutcome",
+    "getOwnDocument",
+    "getOwnOverview",
+    "getPreparationContext",
+    "getReceiptContext",
+    "getTravelContext",
+    "getWorkerEmployment",
+    "initiateUpload",
+    "linkDocument",
+    "listWorkers",
+    "recordDecision",
+    "recordEntryResult",
+    "recordHealthResult",
+    "recordSubmission",
+    "reportCorrection",
+    "resolveActor",
+    "resolveCorrection",
+    "reviewDocumentSet",
+    "saveHealthVisit",
+    "savePreparation",
+    "saveTravelPlan",
+    "saveWorkerEmployment",
+    "signIn",
+    "signOut",
+    "unlinkDocument"
+  ],
+  "ucCoverage": [
+    {
+      "uc": "UC-01",
+      "controller": "PreArrivalApplicationController",
+      "view": "PreArrivalApplicationView",
+      "operations": [
+        "getPreparationContext",
+        "getCaseChecklist",
+        "createDocumentSet",
+        "savePreparation",
+        "reviewDocumentSet",
+        "recordSubmission",
+        "recordDecision",
+        "attachIssuedDocument"
+      ],
+      "acceptanceId": "BE-UC01"
+    },
+    {
+      "uc": "UC-02",
+      "controller": "WorkPermitDocumentPreparationController",
+      "view": "WorkPermitDocumentPreparationView",
+      "operations": [
+        "getPreparationContext",
+        "getCaseChecklist",
+        "createDocumentSet",
+        "savePreparation",
+        "reviewDocumentSet"
+      ],
+      "acceptanceId": "BE-UC02"
+    },
+    {
+      "uc": "UC-03",
+      "controller": "WorkPermitApplicationController",
+      "view": "WorkPermitApplicationView",
+      "operations": [
+        "getApplicationDetail",
+        "recordSubmission",
+        "addRequestedDocuments",
+        "recordDecision",
+        "attachIssuedDocument"
+      ],
+      "acceptanceId": "BE-UC03"
+    },
+    {
+      "uc": "UC-04",
+      "controller": "EmploymentDataController",
+      "view": "EmploymentDataView",
+      "operations": [
+        "listWorkers",
+        "getWorkerEmployment",
+        "saveWorkerEmployment"
+      ],
+      "acceptanceId": "BE-UC04"
+    },
+    {
+      "uc": "UC-05",
+      "controller": "VisaDocumentPreparationController",
+      "view": "VisaDocumentPreparationView",
+      "operations": [
+        "getPreparationContext",
+        "getCaseChecklist",
+        "createDocumentSet",
+        "savePreparation",
+        "linkDocument",
+        "unlinkDocument"
+      ],
+      "acceptanceId": "BE-UC05"
+    },
+    {
+      "uc": "UC-06",
+      "controller": "VisaDocumentReviewController",
+      "view": "VisaDocumentReviewView",
+      "operations": [
+        "getPreparationContext",
+        "reviewDocumentSet"
+      ],
+      "acceptanceId": "BE-UC06"
+    },
+    {
+      "uc": "UC-07",
+      "controller": "VisaReceiptController",
+      "view": "VisaReceiptView",
+      "operations": [
+        "getReceiptContext",
+        "getOwnDocument",
+        "authorizeDownload",
+        "confirmReceipt",
+        "reportCorrection"
+      ],
+      "acceptanceId": "BE-UC07"
+    },
+    {
+      "uc": "UC-08",
+      "controller": "EntryTrackingController",
+      "view": "EntryTrackingView",
+      "operations": [
+        "getTravelContext",
+        "getEntryResult",
+        "saveTravelPlan",
+        "recordEntryResult",
+        "reportCorrection"
+      ],
+      "acceptanceId": "BE-UC08"
+    },
+    {
+      "uc": "UC-09",
+      "controller": "HealthCheckController",
+      "view": "HealthCheckView",
+      "operations": [
+        "getHealthCheckContext",
+        "saveHealthVisit",
+        "recordHealthResult",
+        "confirmMedicalCertificate"
+      ],
+      "acceptanceId": "BE-UC09"
+    },
+    {
+      "uc": "UC-10",
+      "controller": "WorkPermitReceiptController",
+      "view": "WorkPermitReceiptView",
+      "operations": [
+        "getReceiptContext",
+        "getOwnDocument",
+        "authorizeDownload",
+        "confirmReceipt",
+        "reportCorrection"
+      ],
+      "acceptanceId": "BE-UC10"
+    },
+    {
+      "uc": "UC-11",
+      "controller": "VisaApplicationTrackingController",
+      "view": "VisaApplicationTrackingView",
+      "operations": [
+        "getApplicationDetail",
+        "recordSubmission",
+        "addRequestedDocuments",
+        "recordDecision",
+        "attachIssuedDocument",
+        "reportCorrection"
+      ],
+      "acceptanceId": "BE-UC11"
+    }
+  ],
+  "commonOperations": [
+    "getOwnOverview",
+    "getCorrectionDetail",
+    "getMutationOutcome",
+    "resolveCorrection",
+    "signIn",
+    "signOut",
+    "resolveActor",
+    "initiateUpload",
+    "completeUpload",
+    "cleanupTemporaryUploads"
+  ],
+  "limitations": "Coverage checks verify references only, not runtime behavior or semantic correctness."
+}

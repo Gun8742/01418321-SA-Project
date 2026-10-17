@@ -25,10 +25,10 @@ UI label ไม่ใช่ Enum และไม่ต้องใช้ภา�
 | Operation | Preconditions | ผลสำเร็จ / สิ่งที่ไม่ทำ |
 |---|---|---|
 | savePreparation | มีข้อมูลการจ้างและสิทธิ์; ตรวจ gate ของประเภท/กรณีคำขอด้านล่าง | เก็บ draft เป็น NOT_READY หรือ AWAITING_REVIEW; ยังไม่ยื่น |
-| reviewDocumentSet | ทุก required item PASS, ไฟล์พร้อมใช้, metadata ตรงบุคคลและคำขอ | READY พร้อม reviewer/เวลาจาก Session/Server; ไม่อนุมัติคำขอ |
+| reviewDocumentSet | มีสิทธิ์และใช้ Checklist/content version ล่าสุด | ทุก required item PASS, ไฟล์พร้อมและ metadata ตรงจึง READY พร้อม reviewer/Server time; ไม่ครบเก็บผลตรวจไม่ผ่านและ blockers โดยไม่อนุมัติคำขอ |
 | changeReviewedContent | แก้ Field/ไฟล์/Checklist ที่ใช้ยื่น | reset readiness เป็น AWAITING_REVIEW หรือ NOT_READY และต้องตรวจซ้ำ |
 | recordSubmission | มีชุด READY ที่ตรง applicationType; ใช้ Application เดิมสำหรับ follow-up | ถ้าไม่มีเลขรับ/หลักฐานรับ คง AWAITING_SUBMISSION_CONFIRMATION/NOT_DECIDED; ถ้าครบเป็น SUBMITTED/PENDING |
-| recordDecision | การยื่นยืนยันแล้ว มีผลและหลักฐานจากหน่วยงาน | APPROVED/REJECTED/ADDITIONAL_DOCUMENTS; ห้ามใช้ผลที่กรอกเองแทนเอกสารหลักฐาน |
+| recordDecision | การยื่นยืนยันแล้ว มีผลและหลักฐานจากหน่วยงานสำหรับผลตัดสิน | APPROVED/REJECTED/ADDITIONAL_DOCUMENTS; PENDING เป็น followup observation ไม่สร้าง final decidedAt; ห้ามใช้ผลที่กรอกเองแทนเอกสารหลักฐาน |
 | attachIssuedDocument | APPROVED และเอกสารออกจริงตรง Worker/Employment/ชนิดคำขอ | เก็บไฟล์/metadata พร้อมใช้; approved อย่างเดียวไม่แปลว่าพร้อมรับ |
 | confirmReceipt | สิทธิ์ของ Worker, APPROVED และมีช่องทางรับที่พร้อมจริง | สร้าง Receipt ของเอกสาร/Worker นั้น; การเปิด/ดาวน์โหลดไม่เรียก operation นี้ |
 | saveTravelPlan | Worker ของตนมี Visa ที่รับแล้วและใช้เดินทางได้ตามข้อมูลหลักฐาน | PLANNED; ไม่ถือว่าผ่านตรวจเข้าเมือง |
@@ -39,6 +39,7 @@ UI label ไม่ใช่ Enum และไม่ต้องใช้ภา�
 | resolveCorrection | ผู้รับผิดชอบมีสิทธิ์และตรวจหลักฐานแล้ว | แก้เฉพาะข้อมูลบันทึก พร้อมเหตุผล; ไม่แก้เอกสาร/ผลตัดสินต้นฉบับ |
 
 PENDING ไม่ใช่ปุ่มให้ผู้ใช้ย้อนผลสุดท้าย; การแก้ผลที่บันทึกผิดต้องใช้ correction flow พร้อมเหตุผลและตรวจหลักฐาน
+UC-01 ใช้ attachIssuedDocument เก็บหนังสืออนุมัติจริงเพื่อเปิด UC-05; UC-11 ต้องแนบ Visa file จริง ส่วนช่องทางรับ Work Permit ใช้หลักฐานตามกรณี/O-05
 รอบยื่นเอกสารเพิ่มทำใน Application เดิม: เพิ่ม/เปลี่ยนเอกสาร → readiness reset → review → recordSubmission → SUBMITTED/PENDING
 REJECTED ไม่ถูก reset โดยอัตโนมัติ; การดำเนินต่อให้ตรวจคำสั่งหน่วยงานว่าเป็น follow-up ของเดิมหรือคำขอใหม่ก่อนเลือก operation
 ข้อความแจ้งผู้เกี่ยวข้องใน v1 แสดงในหน้าสถานะ ไม่อ้างว่ามี email/SMS ที่ส่งจริง

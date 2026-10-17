@@ -58,3 +58,5 @@ Seed ใช้ข้อมูลสมมติและบัญชี demo ท
 ทดสอบ FK/UNIQUE/XOR, null-before-event, invalid-state rejection, concurrent receipt และ Worker cross-link
 ถ้ามีข้อมูลเดิมในอนาคต ต้อง inventory/backfill/dry run/backup ก่อนเพิ่ม NOT NULL/UNIQUE; ห้าม reset production DB เพื่อให้ migration ผ่าน
 Source images/queries ไม่ใช่หลักฐานว่า SQL/Prisma adapter รองรับ constraints เหล่านี้โดยตรง
+
+รายละเอียด Class → Table, typed case fields, submitted snapshots, evidence records, lock/race handling และ transaction units อยู่ใน [Backend Persistence](backend/persistence.md)
