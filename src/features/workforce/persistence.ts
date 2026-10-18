@@ -19,6 +19,12 @@ export async function loadWorkforce(
   actor: Actor,
 ): Promise<DemoData> {
   const scope = employmentScope(actor);
+  const employer =
+    actor.role === "EMPLOYER"
+      ? await tx.employer.findUniqueOrThrow({
+          where: { id: BigInt(actor.employerId) },
+        })
+      : null;
   const employments = await tx.employment.findMany({
     where: scope,
     include: { employer: true, worker: true },
@@ -94,6 +100,16 @@ export async function loadWorkforce(
   return demoDataSchema.parse({
     schemaVersion: 1,
     nextId: "1",
+    employer: employer
+      ? {
+          id: employer.id.toString(),
+          version: employer.version,
+          companyName: employer.name,
+          registrationNo: employer.registrationNo,
+          employerAddress: employer.address,
+          employerContact: employer.contact,
+        }
+      : undefined,
     workers,
     employments: employments.map((e) => ({
       id: e.id.toString(),
@@ -221,6 +237,7 @@ export function clientProjection(data: DemoData, actor: Actor): DemoData {
   // A snapshot is a UI projection only: it never includes credentials, private keys, or receipts used for replay.
   const state = structuredClone(data);
   if (actor.role === "WORKER") {
+    delete state.employer;
     const worker = state.workers.find((w) => w.id === actor.workerId);
     state.workers = worker ? [worker] : [];
     state.employments = state.employments.map((e) => ({

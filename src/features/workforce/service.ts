@@ -12,7 +12,7 @@ import {
   loadWorkforce,
 } from "./persistence";
 import { persistWorkforce } from "./write";
-import type { DemoData, OperationName } from "./model";
+import { idSchema, type DemoData, type OperationName } from "./model";
 
 export const operationNameSchema = z.enum([
   "linkDocument",
@@ -76,6 +76,25 @@ export async function transaction<T>(
       }
       throw error;
     }
+  }
+}
+async function assertReadableFile(file: {
+  objectKey: string;
+  checksum: string | null;
+  size: number;
+}) {
+  try {
+    const bytes = await getFile(file.objectKey);
+    if (
+      bytes.length !== file.size ||
+      createHash("sha256").update(bytes).digest("hex") !== file.checksum
+    )
+      throw new Error("File integrity failure");
+  } catch {
+    throw new OperationError(
+      "FILE_UNAVAILABLE",
+      "ไฟล์หลักฐานยังไม่พร้อมใช้งาน",
+    );
   }
 }
 export async function allocateIds(tx: Prisma.TransactionClient) {
@@ -219,6 +238,20 @@ export async function executeCommand(principal: Principal, raw: unknown) {
         requestId,
       };
     }
+    if (operation === "saveWorkerEmployment") {
+      if (principal.actor.role !== "EMPLOYER")
+        throw new OperationError("FORBIDDEN", "เฉพาะบัญชีนายจ้าง");
+      const expectedEmployerVersion = z
+        .number()
+        .int()
+        .positive()
+        .parse(input.expectedEmployerVersion);
+      if (before.employer?.version !== expectedEmployerVersion)
+        throw new OperationError(
+          "CONFLICT",
+          "ข้อมูลบริษัทเปลี่ยนแล้ว กรุณาโหลดแบบฟอร์มใหม่",
+        );
+    }
     if (operation === "addSupportingDocument")
       throw new OperationError(
         "PRECONDITION_FAILED",
@@ -267,24 +300,29 @@ export async function executeCommand(principal: Principal, raw: unknown) {
       });
       if (!source || !employmentId)
         throw new OperationError("NOT_FOUND", "ไม่พบไฟล์ที่มีสิทธิ์");
-      try {
-        const bytes = await getFile(source.file.objectKey);
-        if (
-          createHash("sha256").update(bytes).digest("hex") !==
-          source.file.checksum
-        )
-          throw new Error("File integrity failure");
-      } catch {
-        throw new OperationError(
-          "FILE_UNAVAILABLE",
-          "ไฟล์หลักฐานยังไม่พร้อมใช้งาน",
-        );
-      }
+      await assertReadableFile(source.file);
       sourceFileId = source.fileId;
       input.fileName = source.file.originalName;
     }
     const after = structuredClone(before);
     const id = applyOperation(after, principal.actor, operation, input, grants);
+    if (operation === "recordDecision") {
+      const evidenceIds = [
+        ...new Set(z.array(idSchema).parse(input.evidenceDocumentIds)),
+      ];
+      const documents = await tx.document.findMany({
+        where: {
+          id: { in: evidenceIds.map((id) => BigInt(id)) },
+          employmentId: employmentId ? BigInt(employmentId) : 0n,
+          employment: employmentScope(principal.actor),
+          file: { status: "COMPLETE" },
+        },
+        include: { file: true },
+      });
+      if (documents.length !== evidenceIds.length)
+        throw new OperationError("NOT_FOUND", "ไม่พบไฟล์หลักฐานที่มีสิทธิ์");
+      for (const document of documents) await assertReadableFile(document.file);
+    }
     if (BigInt(after.nextId) - BigInt(nextId) > 64n)
       throw new Error("ID allocation exhausted");
     if (operation === "createDocumentSet") {
@@ -315,8 +353,12 @@ export async function executeCommand(principal: Principal, raw: unknown) {
       set.country = "";
       set.authority = "";
     }
-    if (operation === "reviewDocumentSet") {
-      const set = after.stages.find((s) => s.id === id);
+    if (operation === "reviewDocumentSet" || operation === "recordSubmission") {
+      const set = after.stages.find((s) =>
+        operation === "recordSubmission"
+          ? s.application.id === id
+          : s.id === id,
+      );
       const policy = await tx.casePolicy.findUnique({
         where: { version: set?.checklistVersion ?? "" },
       });

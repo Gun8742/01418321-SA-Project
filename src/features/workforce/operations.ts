@@ -149,6 +149,7 @@ const updateFields = {
 };
 const saveWorkerSchema = z.strictObject({
   ...requestFields,
+  expectedEmployerVersion: z.number().int().positive().optional(),
   workerId: idSchema.optional(),
   employmentId: idSchema.optional(),
   expectedVersions: z

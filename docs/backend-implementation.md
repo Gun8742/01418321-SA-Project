@@ -28,6 +28,10 @@ Backend ใช้ Next.js Route Handlers, PostgreSQL 17/Prisma 7, Better Auth �
 
 ไฟล์ `docs/specs/backend/operations.md` ยังคงเป็น canonical proposal ก่อน implement: รุ่นนี้ใช้ UI projection เดิมและ resource ID + refresh แทน full mutation DTO/availableActions ในทุก response ชื่อ field บางรายการจึงตรง UI model; ตัวตรวจ Zod ใน implementation เป็น wire contract ของรุ่นนี้ Authentication ใช้ native Better Auth contract แยกจาก operation receipts, cleanup เป็น trusted CLI การ export แบบราชการ/รวมชุดเอกสารยังไม่มี
 
+`saveWorkerEmployment` ต้องส่ง `expectedEmployerVersion` ทั้งตอนสร้างและแก้ Worker/Employment โดยอ่านจาก `snapshot.data.employer.version` ซึ่งส่งให้เฉพาะ Employer แม้ยังไม่มี Employment ฟอร์มเก็บ version คู่กับข้อมูลที่แสดงจนกว่าจะเปิดใหม่; version เก่าคืน CONFLICT โดยไม่เขียนบางส่วน
+
+ก่อน `recordDecision` ตรวจว่าไฟล์หลักฐานทุกไฟล์อ่านได้ ขนาดและ SHA-256 ตรงกับที่จัดเก็บ; หากไฟล์หาย/เปลี่ยน/storage ไม่พร้อม คืน FILE_UNAVAILABLE และ rollback state/history/operation receipt ก่อน `recordSubmission` ตรวจ policy ของ checklistVersion ที่ชุดนั้นอ้างอิงซ้ำภายใน transaction แม้ readiness เคย READY แล้ว
+
 Business IDs เป็น BIGINT และส่ง JSON เป็น decimal string; Auth IDs ใช้ native library IDs วันธุรกิจเป็น DATE ส่วน event/session timestamps เป็น UTC Session token เก็บ SHA-256 ผ่าน Prisma adapter extension; Client ได้ HttpOnly cookie การเปลี่ยน Better Auth ต้องทดสอบ create/read/refresh/revoke และตรวจ adapter call paths ใหม่
 
 Mutation ใช้ Serializable transaction, expected versions, actor/operation/requestId receipts และ unique constraints ภายใน DB การ replay ตรวจสิทธิ์ปัจจุบันก่อนคืน resource ID เดิมและไม่ย้อนสถานะ ข้อมูลเหตุการณ์เก็บ snapshot แยกจากเอกสารที่แก้ภายหลัง ID allocator ใช้ counter lock ร่วม จึงเหมาะกับขนาดโครงการ; เมื่อ throughput เพิ่มให้เปลี่ยนเป็น DB sequence พร้อมรักษา idempotency
@@ -60,7 +64,7 @@ Cleanup เก็บกวาด temporary uploads เก่ากว่า 24 �
 
 ## ผลตรวจรุ่น local — 18 ตุลาคม 2569
 
-- Unit tests 34 กรณี, PostgreSQL/Auth/S3 integration 10 กรณี, Mock browser E2E 9 กรณี และ Backend browser E2E 2 กรณีผ่าน
+- Unit tests 34 กรณี, PostgreSQL/Auth/S3 integration 15 กรณี, Mock browser E2E 9 กรณี และ Backend browser E2E 2 กรณีผ่าน
 - TypeScript และ production build ผ่าน; formatter ตรวจ source/config/test scripts และไม่แตะ generated Prisma client
 - Spec checker ตรวจ Markdown/UC mappings/examples ผ่าน แต่ source fingerprints ตาม manifest ปัจจุบันไม่พบ 29 ไฟล์ภายนอก จึงไม่ถือว่าตรวจ checksum ต้นฉบับแล้ว
 - `pg` 8 แจ้ง deprecation เกี่ยวกับ concurrent client queries ในการทดสอบ Prisma; ไม่ทำให้ test ล้ม ต้องตรวจ adapter compatibility ก่อนย้าย pg 9

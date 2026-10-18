@@ -199,6 +199,15 @@ export const correctionSchema = z.object({
 export const demoDataSchema = z.object({
   schemaVersion: z.literal(1),
   nextId: z.union([z.number().int().safe(), idSchema]),
+  employer: employmentFieldsSchema
+    .pick({
+      companyName: true,
+      registrationNo: true,
+      employerAddress: true,
+      employerContact: true,
+    })
+    .extend({ id: idSchema, version: z.number().int().positive() })
+    .optional(),
   workers: z.array(workerSchema),
   employments: z.array(employmentSchema),
   stages: z.array(stageSchema),

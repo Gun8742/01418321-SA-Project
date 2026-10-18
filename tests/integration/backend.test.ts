@@ -15,7 +15,12 @@ import {
   authorizeDownload,
   cleanupTemporaryUploads,
 } from "../../src/server/documents";
-import { getFile, deleteFile, validateFile } from "../../src/server/storage";
+import {
+  getFile,
+  putFile,
+  deleteFile,
+  validateFile,
+} from "../../src/server/storage";
 import { PDFDocument } from "pdf-lib";
 import { businessDate } from "../../src/lib/date";
 import { demoDataSchema } from "../../src/features/workforce/model";
@@ -295,6 +300,7 @@ describe("Private files and transaction integrity", () => {
           {
             workerId,
             employmentId,
+            expectedEmployerVersion: before.data.employer?.version,
             expectedVersions: {
               worker: workerVersion,
               employment: employmentVersion,
@@ -540,6 +546,7 @@ describe("Boundary and persistence regressions", () => {
     } = template;
     const requestId = crypto.randomUUID();
     const input = {
+      expectedEmployerVersion: state.employer?.version,
       profile: {
         ...profile,
         name: "NEW SYNTHETIC WORKER",
@@ -630,6 +637,7 @@ describe("Current ownership and shared profiles", () => {
     await command(employer, "saveWorkerEmployment", {
       workerId: w.id,
       employmentId: e.id,
+      expectedEmployerVersion: state.employer?.version,
       expectedVersions: { worker: wv, employment: ev },
       profile: { ...profile, name: "ARUN SHARED PROFILE" },
       employment,
@@ -644,5 +652,147 @@ describe("Current ownership and shared profiles", () => {
         input: { employmentId: "201", type: "VISA", documentSetId: "2040" },
       }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
+describe("PR4 review regressions", () => {
+  it("rejects stale Employer versions on worker creation without partial writes", async () => {
+    const state = (await snapshot(employer)).data;
+    const e = state.employments[0];
+    const w = state.workers.find((w) => w.id === e.workerId)!;
+    const { id: wid, version: wv, ...profile } = w;
+    const { id: eid, workerId, employerId, version: ev, ...employment } = e;
+    const company = await db.employer.findUniqueOrThrow({ where: { id: 1n } });
+    const count = await db.worker.count();
+    const employmentCount = await db.employment.count();
+    const requestId = crypto.randomUUID();
+    await db.employer.update({
+      where: { id: 1n },
+      data: { name: "LATEST COMPANY", version: { increment: 1 } },
+    });
+    try {
+      await expect(
+        command(
+          employer,
+          "saveWorkerEmployment",
+          {
+            expectedEmployerVersion: company.version,
+            profile: { ...profile, passportNo: "STALE-CREATE" },
+            employment,
+          },
+          requestId,
+        ),
+      ).rejects.toMatchObject({ code: "CONFLICT" });
+      expect(
+        (await db.employer.findUniqueOrThrow({ where: { id: 1n } })).name,
+      ).toBe("LATEST COMPANY");
+      expect(await db.worker.count()).toBe(count);
+      expect(await db.employment.count()).toBe(employmentCount);
+      expect(await db.operationReceipt.count({ where: { requestId } })).toBe(0);
+      await expect(
+        command(employer, "saveWorkerEmployment", { profile, employment }),
+      ).rejects.toBeDefined();
+    } finally {
+      await db.employer.update({
+        where: { id: 1n },
+        data: { name: company.name, version: { increment: 1 } },
+      });
+    }
+  });
+
+  it.each(["missing", "tampered", "unavailable"])(
+    "keeps decision and events unchanged when evidence is %s",
+    async (failure) => {
+      const file = await upload(employer, "201");
+      const created = await command(employer, "createDocumentSet", {
+        employmentId: "201",
+        type: "PRE_ARRIVAL",
+        caseKey: "BEFORE_ENTRY",
+      });
+      await prepareAndReview(created.data.id, file.id);
+      await accept(created.data.id, file.id);
+      const before = await stage(created.data.id);
+      const stored = await db.fileUpload.findUniqueOrThrow({
+        where: { id: file.uploadId },
+      });
+      const endpoint = process.env.S3_ENDPOINT;
+      if (failure !== "unavailable") await deleteFile(stored.objectKey);
+      if (failure === "tampered")
+        await putFile(
+          stored.objectKey,
+          new TextEncoder().encode("changed bytes"),
+          "application/pdf",
+        );
+      if (failure === "unavailable")
+        process.env.S3_ENDPOINT = "http://127.0.0.1:1";
+      const requestId = crypto.randomUUID();
+      try {
+        await expect(
+          command(
+            employer,
+            "recordDecision",
+            {
+              applicationId: before.application.id,
+              expectedVersion: before.application.version,
+              decision: "APPROVED",
+              decidedAt: businessDate(),
+              reason: "synthetic",
+              requestedItems: "",
+              evidenceDocumentIds: [file.id],
+            },
+            requestId,
+          ),
+        ).rejects.toMatchObject({ code: "FILE_UNAVAILABLE" });
+        expect(await stage(created.data.id)).toEqual(before);
+        expect(await db.operationReceipt.count({ where: { requestId } })).toBe(
+          0,
+        );
+      } finally {
+        if (endpoint === undefined) delete process.env.S3_ENDPOINT;
+        else process.env.S3_ENDPOINT = endpoint;
+      }
+    },
+  );
+
+  it("rejects submission of an already READY set after its policy is revoked", async () => {
+    const file = await upload(employer, "201");
+    const created = await command(employer, "createDocumentSet", {
+      employmentId: "201",
+      type: "PRE_ARRIVAL",
+      caseKey: "BEFORE_ENTRY",
+    });
+    await prepareAndReview(created.data.id, file.id);
+    const before = await stage(created.data.id);
+    expect(before.readinessStatus).toBe("READY");
+    await db.casePolicy.update({
+      where: { version: before.checklistVersion },
+      data: { approved: false },
+    });
+    const requestId = crypto.randomUUID();
+    const input = {
+      documentSetId: before.id,
+      expectedVersion: before.version,
+      expectedApplicationVersion: before.application.version,
+      authority: "synthetic",
+      receiptNo: "SYN-REVOKED",
+      submittedAt: businessDate(),
+      acceptedEvidenceDocumentIds: [file.id],
+    };
+    try {
+      await expect(
+        command(employer, "recordSubmission", input, requestId),
+      ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
+      expect(await stage(created.data.id)).toEqual(before);
+      expect(await db.operationReceipt.count({ where: { requestId } })).toBe(0);
+    } finally {
+      await db.casePolicy.update({
+        where: { version: before.checklistVersion },
+        data: { approved: true },
+      });
+    }
+    await command(employer, "recordSubmission", input, requestId);
+    expect((await stage(created.data.id)).application.submissionStatus).toBe(
+      "SUBMITTED",
+    );
   });
 });

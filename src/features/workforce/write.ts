@@ -71,7 +71,10 @@ export async function persistWorkforce(
       if (actor.role !== "EMPLOYER" || actor.employerId !== e.employerId)
         throw new OperationError("FORBIDDEN", "ไม่มีสิทธิ์แก้นายจ้าง");
       await tx.employer.update({
-        where: { id: employer.id },
+        where: {
+          id: employer.id,
+          version: before.employer?.version ?? employer.version,
+        },
         data: {
           name: e.companyName,
           registrationNo: e.registrationNo,

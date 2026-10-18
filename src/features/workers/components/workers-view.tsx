@@ -72,10 +72,11 @@ function WorkerEditor({
   worker?: Worker;
   employment?: Employment;
 }) {
-  const { mutate } = useDemo();
+  const { mutate, data } = useDemo();
+  const [company] = useState(data.employer);
   const router = useRouter();
   const w = fieldValues(worker),
-    e = fieldValues(employment);
+    e = { ...fieldValues(company), ...fieldValues(employment) };
   const fields: FieldSpec[] = [
     ...profileFields.map(([name, label, type]) => ({
       name,
@@ -104,6 +105,7 @@ function WorkerEditor({
   ];
   async function save(values: FormValues) {
     return mutate("saveWorkerEmployment", {
+      ...(company ? { expectedEmployerVersion: company.version } : {}),
       ...(worker && employment
         ? {
             workerId: worker.id,
