@@ -1,56 +1,8 @@
+import { allocate } from "../workforce/operations";
 import type { CaseKind, DemoData, Employment, Stage, Worker } from "./model";
-export function emptyStage(
-  id: string,
-  employmentId: string,
-  type: CaseKind,
-): Stage {
-  return {
-    id,
-    employmentId,
-    type,
-    caseKey: type === "WORK_PERMIT" ? "AFTER_ENTRY" : "BEFORE_ENTRY",
-    country: "อินเดีย",
-    authority: "หน่วยงานตัวอย่าง",
-    version: 1,
-    readinessStatus: "NOT_READY",
-    checklistVersion: "DEMO-1",
-    items: [
-      {
-        requirementKey: "passport",
-        label: "หนังสือเดินทาง",
-        required: true,
-        documentId: null,
-      },
-      {
-        requirementKey: "employment",
-        label: "สัญญาจ้าง / หนังสือรับเข้าทำงาน",
-        required: true,
-        documentId: null,
-      },
-      {
-        requirementKey: "company",
-        label: "เอกสารบริษัท / หนังสือมอบอำนาจตามกรณี",
-        required: true,
-        documentId: null,
-      },
-    ],
-    application: {
-      id: String(Number(id) + 1000),
-      version: 1,
-      submissionStatus: "NOT_SUBMITTED",
-      decisionStatus: "NOT_DECIDED",
-      authority: "",
-      receiptNo: "",
-      submittedAt: "",
-      decidedAt: "",
-      reason: "",
-      requestedItems: "",
-      evidenceDocumentIds: [],
-      issuedDocumentId: null,
-      history: [],
-    },
-  };
-}
+export { emptyStage } from "../workforce/stage";
+import { emptyStage } from "../workforce/stage";
+
 function worker(
   id: string,
   name: string,
@@ -137,7 +89,7 @@ export function createDemoData(scenario: DemoScenario = "initial"): DemoData {
       )
         continue;
       for (const item of stage.items) {
-        const id = String(data.nextId++);
+        const id = allocate(data);
         data.documents.push({
           id,
           employmentId: e.id,
@@ -176,7 +128,7 @@ export function createDemoData(scenario: DemoScenario = "initial"): DemoData {
           stage.application.submissionStatus = "NOT_SUBMITTED";
           continue;
         }
-        const id = String(data.nextId++);
+        const id = allocate(data);
         const received =
           (e.id === "203" ||
             scenario === "medical" ||
@@ -240,7 +192,7 @@ export function createDemoData(scenario: DemoScenario = "initial"): DemoData {
     let entry = data.entries.find((t) => t.employmentId === e.id);
     if (!entry) {
       entry = {
-        id: String(data.nextId++),
+        id: allocate(data),
         employmentId: e.id,
         workerId: e.workerId,
         visaDocumentId: visa,
@@ -259,7 +211,7 @@ export function createDemoData(scenario: DemoScenario = "initial"): DemoData {
       };
       data.entries.push(entry);
     }
-    const certificateId = String(data.nextId++);
+    const certificateId = allocate(data);
     data.documents.push({
       id: certificateId,
       employmentId: e.id,
@@ -276,7 +228,7 @@ export function createDemoData(scenario: DemoScenario = "initial"): DemoData {
       receivedChannel: null,
     });
     data.healthChecks.push({
-      id: String(data.nextId++),
+      id: allocate(data),
       employmentId: e.id,
       workerId: e.workerId,
       entryId: entry.id,

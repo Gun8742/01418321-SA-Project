@@ -176,7 +176,7 @@ export function AppFrame({
   if (!demo.ready)
     return (
       <main className="standalone" role="status">
-        กำลังโหลดข้อมูลสมมติ…
+        กำลังโหลดข้อมูล…
       </main>
     );
   if (!demo.actor)
@@ -190,7 +190,7 @@ export function AppFrame({
       <main className="standalone stack">
         <h1>ไม่มีสิทธิ์เข้าพื้นที่นี้</h1>
         <Banner tone="warning">
-          บัญชีสาธิตปัจจุบันไม่ตรงกับ Actor ของหน้าที่ขอ
+          บัญชีปัจจุบันไม่ตรงกับ Actor ของหน้าที่ขอ
         </Banner>
         <Link
           className="button"
@@ -209,9 +209,8 @@ export function AppFrame({
       : (demo.data.workers.find((w) => w.id === actor.workerId)?.name ??
         "ลูกจ้าง");
   const nav = area === "EMPLOYER" ? employerNav : workerNav;
-  function logout() {
-    demo.signOut();
-    router.replace("/login");
+  async function logout() {
+    if (await demo.signOut()) router.replace("/login");
   }
   return (
     <div className="shell">
@@ -274,10 +273,10 @@ export function AppFrame({
           <p>
             ข้อมูลตัวอย่างสมมติ
             <br />
-            MOCK FRONTEND
+            {demo.mode === "mock" ? "MOCK FRONTEND" : "ระบบจัดการเอกสาร"}
           </p>
           <button className="button secondary" onClick={logout}>
-            ออกจากระบบสาธิต
+            {demo.mode === "backend" ? "ออกจากระบบ" : "ออกจากระบบสาธิต"}
           </button>
         </footer>
       </aside>
@@ -287,7 +286,10 @@ export function AppFrame({
             WORKSPACE /{" "}
             {area === "EMPLOYER" ? "บริษัทตัวอย่าง จำกัด" : "บัญชีของฉัน"}
           </span>
-          <strong>{name} · ข้อมูลสมมติ</strong>
+          <strong>
+            {name}
+            {demo.mode === "mock" ? " · ข้อมูลสมมติ" : ""}
+          </strong>
         </div>
         {demo.notice && (
           <div role="status">
@@ -295,9 +297,11 @@ export function AppFrame({
           </div>
         )}
         {children}
-        <DemoTools />
+        {demo.mode === "mock" && <DemoTools />}
         <p className="app-footer">
-          ข้อมูลสมมติ · การทำงานและดาวน์โหลดจำลอง · ไม่มีการส่งให้หน่วยงานภายนอก
+          {demo.mode === "mock"
+            ? "ข้อมูลสมมติ · การทำงานและดาวน์โหลดจำลอง · ไม่มีการส่งให้หน่วยงานภายนอก"
+            : "ข้อมูลถูกบันทึกในระบบ · การยื่นและพิจารณาดำเนินการผ่านหน่วยงานภายนอก"}
         </p>
       </main>
     </div>

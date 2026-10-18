@@ -4,8 +4,19 @@
 
 ใช้ Modular Monolith แบบ Feature-based: Next.js Full-stack หนึ่งแอป แยก Module ตามพฤติกรรมธุรกิจ ไม่แยกตาม Actor หรือสร้างบริการแยกสำหรับแต่ละ UC
 
-โครงสร้างด้านล่างเป็นแบบแปลนเริ่มต้น ปัจจุบันมี Mock Frontend runtime แล้ว; Database schema และ Backend ยังไม่มี implementation
+โครงสร้างด้านล่างเป็นแบบแปลนเริ่มต้น ปัจจุบันมี Frontend, PostgreSQL schema/migrations และ Backend integration แล้ว ดู [Backend implementation](backend-implementation.md) สำหรับ transport และข้อจำกัดของรุ่น local
 ไฟล์ `.gitkeep` มีไว้ให้ Git เก็บ Directory ว่าง เมื่อมีไฟล์จริงใน Directory นั้นให้ลบ placeholder ออก
+
+## Runtime ที่ใช้อยู่
+
+- `src/app/api/` — Route Handlers สำหรับ Auth, workforce queries/mutations, private file upload/download และ health checks
+- `src/features/workforce/operations.ts` — กฎธุรกิจร่วมแบบ pure; Mock และ Server ใช้ชุดเดียวกัน
+- `src/features/workforce/service.ts`, `queries.ts`, `persistence.ts`, `write.ts` — transaction orchestration, scoped queries, read projection และ DB writes
+- `src/features/workforce/provider.tsx`, `login.tsx` — Client adapter ที่เรียก Server; ไม่เก็บข้อมูล Backend ใน browser storage
+- `src/server/` — DB, native Auth/session adapter, HTTP boundary และ private storage; ใช้ `server-only`
+- `prisma/` — schema, migrations และ trusted seed; `tests/integration/` ใช้ DB/S3 จริงในเครื่อง ส่วน browser tests แยก Mock/Backend
+
+ยังเก็บชื่อ DemoData ใน UI projection เดิมเพื่อลดการเปลี่ยน callers; ไม่ใช่ Prisma entities โฟลเดอร์ Feature ว่างในแบบแปลนยังไม่จำเป็นต้องสร้าง Service/Repository ซ้ำเมื่อ shared workforce rules ครอบคลุมพฤติกรรมนั้นแล้ว
 
 ## Directory ที่เตรียมไว้
 

@@ -1,5 +1,7 @@
 # Mock Frontend — Implementation and Verification
 
+Backend เชื่อมแล้ว: ดู [Backend implementation](backend-implementation.md) สำหรับ Server mode; ข้อจำกัด Mock ในเอกสารนี้ใช้เฉพาะ Mock mode
+
 ตรวจวันที่ 18 ตุลาคม 2569 สำหรับ branch `feat/mock-frontend`
 ขอบเขตเป็น browser-only demo ใช้ข้อมูลสมมติ ไม่ใช่ Backend integration หรือระบบพร้อมใช้ข้อมูลจริง
 

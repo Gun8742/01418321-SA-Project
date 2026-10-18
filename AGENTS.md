@@ -11,9 +11,9 @@
 
 ## Current State and Stack
 
-Repository นี้มี Mock Frontend แล้ว ณ วันที่ 18 ตุลาคม 2569; คำสั่งและข้อจำกัดอยู่ใน [README](README.md)
-ก่อนแก้ UI หรือ Mock operations ให้อ่าน [Frontend Spec](docs/specs/frontend/README.md) และตรวจ manifests/lockfile/scripts จริง
-Mock เปิดผ่าน NEXT_PUBLIC_ENABLE_MOCK=true เท่านั้น เก็บข้อมูลสมมติใน browser; การเชื่อม Auth/Database/Private Storage จริงยังไม่มี implementation
+Repository มี Frontend และ Backend integration แล้ว ณ วันที่ 18 ตุลาคม 2569; อ่าน [README](README.md) สำหรับการเริ่มระบบ และ [Backend implementation](docs/backend-implementation.md) ก่อนแก้ Auth, persistence, uploads หรือ transport
+ก่อนแก้ UI หรือ shared operations ให้อ่าน [Frontend Spec](docs/specs/frontend/README.md) และตรวจ manifests/lockfile/scripts จริง
+Backend ใช้ PostgreSQL/Prisma, Better Auth และ S3 API; Mock เปิดด้วย NEXT_PUBLIC_ENABLE_MOCK=true แยกจาก BACKEND_ENABLED=true และต้องไม่เปิดพร้อมกัน
 
 ก่อนเพิ่ม Feature, Route หรือ Infrastructure ให้อ่าน [Architecture](docs/architecture.md); ก่อนทำ Use Case ให้ดู [Use Case Map](docs/use-case-map.md) เพื่อเลือก Module และหน้าจอที่เกี่ยวข้อง
 
@@ -22,17 +22,7 @@ Mock เปิดผ่าน NEXT_PUBLIC_ENABLE_MOCK=true เท่านั้
 ชุด Spec เป็น Draft; ข้อเสนอ implementation ไม่ทับ revised Description และการ merge เอกสารไม่ถือว่าปิด Open decisions แล้ว
 
 Frontend ติดตั้ง Next.js/React/TypeScript, Zod, Noto Sans Thai, Vitest และ Playwright แล้ว ใช้ CSS Tokens จาก Figma; เวอร์ชันจริงดู package.json/lockfile
-ส่วนต่อไปนี้ยังเป็นตัวเลือกสำหรับ Backend integration หรือ UI เพิ่มเติม ไม่ใช่สิ่งที่ติดตั้งแล้วทั้งหมด:
-
-- Next.js Server Actions/Route Handlers สำหรับ Full-stack integration เมื่ออนุมัติ Backend แล้ว
-- Tailwind CSS + shadcn/ui สำหรับ UI; React Hook Form + Zod สำหรับแบบฟอร์ม
-- PostgreSQL + Prisma ORM สำหรับข้อมูลและ migrations
-- Better Auth สำหรับ Authentication/Session; ตรวจ Role และสิทธิ์ข้อมูลในฝั่ง Server เพิ่มเติม
-- Private object storage ที่รองรับ S3 API สำหรับเอกสาร; Vitest และ Playwright สำหรับการทดสอบ
-- Docker Compose สำหรับบริการที่ต้องใช้ร่วมกันระหว่างพัฒนา
-
-เมื่องานให้เริ่มพัฒนา ให้ใช้ข้อกำหนดของงานนั้นและ dependencies ที่มีอยู่เป็นหลัก เลือกเวอร์ชันที่ทำงานร่วมกันได้ และบันทึกคำสั่งใช้งานจริงใน README
-ใช้โครงสร้างแอปเดียวก่อน แยก Go Backend, Microservices หรือบริการเสริมเมื่อขอบเขตงานต้องการเท่านั้น
+Stack ที่ติดตั้งจริงตรวจจาก package.json/lockfile ใช้ Components/CSS Tokens และ Zod เดิมก่อนเพิ่ม UI libraries ใช้แอปเดียวก่อน แยกบริการเมื่อขอบเขตงานต้องการ
 
 สำหรับ Next.js ให้ตรวจเวอร์ชันที่ติดตั้งและอ่าน guide ที่เกี่ยวข้องใน `node_modules/next/dist/docs/` หากมี มิฉะนั้นใช้เอกสารทางการที่ตรงเวอร์ชัน
 รักษา block `nextjs-agent-rules` ที่ tooling สร้างเมื่อมีอยู่จริง โดยไม่คัดลอกคำเตือนของ Repository อื่นมาเป็นข้อเท็จจริงของที่นี่

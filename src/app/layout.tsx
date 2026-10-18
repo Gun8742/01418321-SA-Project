@@ -12,7 +12,10 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body>
-        <DemoGate enabled={process.env.NEXT_PUBLIC_ENABLE_MOCK === "true"}>
+        <DemoGate
+          enabled={process.env.NEXT_PUBLIC_ENABLE_MOCK === "true"}
+          backendEnabled={process.env.BACKEND_ENABLED === "true"}
+        >
           {children}
         </DemoGate>
       </body>

@@ -1,9 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { BackendLogin } from "../workforce/login";
 import { useDemo } from "./context";
 import { Banner, OperationForm } from "@/components/ui/primitives";
 export function DemoLogin() {
+  const { mode } = useDemo();
+  return mode === "backend" ? <BackendLogin /> : <MockLogin />;
+}
+function MockLogin() {
   const { ready, actor, signIn } = useDemo();
   const router = useRouter();
   const [role, setRole] = useState<"EMPLOYER" | "WORKER">("EMPLOYER");

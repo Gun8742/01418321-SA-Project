@@ -95,10 +95,14 @@ export function NotFound() {
   );
 }
 export function ReadFailure() {
-  const { setReadError } = useDemo();
+  const { setReadError, mode } = useDemo();
   return (
     <Panel title="โหลดข้อมูลไม่สำเร็จ">
-      <Banner tone="error">กำลังจำลองข้อผิดพลาด ข้อมูลเดิมยังไม่เปลี่ยน</Banner>
+      <Banner tone="error">
+        {mode === "mock"
+          ? "กำลังจำลองข้อผิดพลาด ข้อมูลเดิมยังไม่เปลี่ยน"
+          : "อ่านข้อมูลจาก Server ไม่สำเร็จ กรุณาลองใหม่"}
+      </Banner>
       <button className="button" onClick={() => setReadError(false)}>
         ลองโหลดอีกครั้ง
       </button>
@@ -136,7 +140,7 @@ export function OperationForm({
   disabled?: boolean;
   children?: ReactNode;
 }) {
-  const { pending } = useDemo();
+  const { pending, mode } = useDemo();
   const formId = useId();
   const groups = Array.from(new Set(fields.map((field) => field.group ?? "")));
   const [feedback, setFeedback] = useState<{
@@ -208,7 +212,11 @@ export function OperationForm({
     }
     dirty.current = false;
     setErrors({});
-    setFeedback({ message: "บันทึกข้อมูลสมมติแล้ว", error: false });
+    setFeedback({
+      message:
+        mode === "mock" ? "บันทึกข้อมูลสมมติแล้ว" : "บันทึกบน Server แล้ว",
+      error: false,
+    });
     onSuccess?.(result.data.id);
   }
   return (
@@ -328,9 +336,31 @@ export function OperationForm({
   );
 }
 export function DocumentPreview({ doc }: { doc: DemoDocument }) {
+  const { mode } = useDemo();
+  const [downloadError, setDownloadError] = useState("");
   const dialog = useRef<HTMLDialogElement>(null);
   const [downloaded, setDownloaded] = useState(false);
-  function downloadSample() {
+  async function downloadSample() {
+    if (mode === "backend") {
+      setDownloadError("");
+      try {
+        const response = await fetch("/api/documents/" + doc.id + "/download", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
+        if (!response.ok) throw new Error("Download failed");
+        const url = URL.createObjectURL(await response.blob());
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = doc.fileName;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        setDownloaded(true);
+      } catch {
+        setDownloadError("ดาวน์โหลดไม่สำเร็จ กรุณาตรวจสิทธิ์และลองใหม่");
+      }
+      return;
+    }
     const blob = new Blob(
       [
         "SYNTHETIC DEMO ONLY\nSA / WORKFORCE\n" +
@@ -363,8 +393,9 @@ export function DocumentPreview({ doc }: { doc: DemoDocument }) {
         <div className="stack">
           <h2 id={"preview-" + doc.id}>{doc.title}</h2>
           <Banner>
-            Preview จำลอง · ไม่ใช่เอกสารราชการ ระบบเก็บเฉพาะ metadata
-            ไม่เก็บไฟล์ที่เลือก
+            {mode === "mock"
+              ? "Preview จำลอง · ไม่ใช่เอกสารราชการ ระบบเก็บเฉพาะ metadata ไม่เก็บไฟล์ที่เลือก"
+              : "ข้อมูลไฟล์ที่จัดเก็บบน Server · การดาวน์โหลดไม่ยืนยันการรับเอกสาร"}
           </Banner>
           <dl className="metadata">
             <dt>เลขที่เอกสาร</dt>
@@ -374,14 +405,17 @@ export function DocumentPreview({ doc }: { doc: DemoDocument }) {
             <dt>ชื่อไฟล์ที่อ้างอิง</dt>
             <dd>{doc.fileName}</dd>
           </dl>
+          {downloadError && <p role="alert">{downloadError}</p>}
           {downloaded && (
             <p role="status">
-              ดาวน์โหลดไฟล์ข้อความสาธิตแล้ว ยังไม่ถือว่ายืนยันการรับ
+              {mode === "mock"
+                ? "ดาวน์โหลดไฟล์ข้อความสาธิตแล้ว ยังไม่ถือว่ายืนยันการรับ"
+                : "ส่งไฟล์ให้ browser แล้ว ยังไม่ถือว่ายืนยันการรับ"}
             </p>
           )}
           <div className="row">
             <button className="button" onClick={downloadSample}>
-              ดาวน์โหลดตัวอย่างจำลอง
+              {mode === "mock" ? "ดาวน์โหลดตัวอย่างจำลอง" : "ดาวน์โหลดไฟล์"}
             </button>
             <button
               className="button secondary"
@@ -396,7 +430,8 @@ export function DocumentPreview({ doc }: { doc: DemoDocument }) {
   );
 }
 export function DocumentLibrary({ employmentId }: { employmentId: string }) {
-  const { data, mutate, pending } = useDemo();
+  const { data, actor, mutate, pending, mode, uploadFile } = useDemo();
+  const [ownerKind, setOwnerKind] = useState<"WORKER" | "EMPLOYER">("WORKER");
   const [message, setMessage] = useState("");
   const [checking, setChecking] = useState(false);
   const docs = data.documents.filter((d) => d.employmentId === employmentId);
@@ -410,14 +445,19 @@ export function DocumentLibrary({ employmentId }: { employmentId: string }) {
         setMessage(error);
         return;
       }
-      const result = await mutate("addSupportingDocument", {
-        employmentId,
-        title: file.name,
-        fileName: file.name,
-      });
+      const result =
+        mode === "backend" && uploadFile
+          ? await uploadFile(file, employmentId, ownerKind)
+          : await mutate("addSupportingDocument", {
+              employmentId,
+              title: file.name,
+              fileName: file.name,
+            });
       setMessage(
         result.ok
-          ? "เพิ่มข้อมูลไฟล์ตัวอย่างแล้ว (ไม่อัปโหลดเนื้อหาไฟล์)"
+          ? mode === "mock"
+            ? "เพิ่มข้อมูลไฟล์ตัวอย่างแล้ว (ไม่อัปโหลดเนื้อหาไฟล์)"
+            : "จัดเก็บไฟล์แล้ว"
           : result.error.message,
       );
     } catch {
@@ -439,9 +479,28 @@ export function DocumentLibrary({ employmentId }: { employmentId: string }) {
   return (
     <Panel title="เอกสารในบริบทการจ้างนี้">
       <p className="muted small">
-        โหมดสาธิต: เลือก PDF / JPEG / PNG ไม่เกิน 5 MiB ตรวจชนิดไฟล์จริง
-        เก็บเฉพาะชื่อและ metadata ใน browser
+        {mode === "mock"
+          ? "โหมดสาธิต: เลือก PDF / JPEG / PNG ไม่เกิน 5 MiB เก็บเฉพาะชื่อและ metadata ใน browser"
+          : "เลือก PDF / JPEG / PNG ไม่เกิน 5 MiB · จัดเก็บไฟล์แบบ Private และตรวจสิทธิ์ก่อนดาวน์โหลด"}
       </p>
+      {mode === "backend" && actor?.role === "EMPLOYER" && (
+        <label>
+          เจ้าของเอกสาร{" "}
+          <select
+            value={ownerKind}
+            onChange={(event) =>
+              setOwnerKind(
+                event.target.value === "EMPLOYER" ? "EMPLOYER" : "WORKER",
+              )
+            }
+          >
+            <option value="WORKER">ลูกจ้างในการจ้างนี้</option>
+            <option value="EMPLOYER">
+              บริษัท (ไม่แชร์คลังเอกสารให้ลูกจ้าง)
+            </option>
+          </select>
+        </label>
+      )}
       <div className="field">
         <label htmlFor={"upload-" + employmentId}>เพิ่มเอกสารประกอบ</label>
         <input
@@ -452,13 +511,15 @@ export function DocumentLibrary({ employmentId }: { employmentId: string }) {
           disabled={pending || checking}
         />
       </div>
-      <button
-        className="button secondary"
-        onClick={addSample}
-        disabled={pending || checking}
-      >
-        เพิ่มหลักฐานสมมติสำหรับทดลอง
-      </button>
+      {mode === "mock" && (
+        <button
+          className="button secondary"
+          onClick={addSample}
+          disabled={pending || checking}
+        >
+          เพิ่มหลักฐานสมมติสำหรับทดลอง
+        </button>
+      )}
       {message && <p role="status">{message}</p>}
       {checking && <p role="status">กำลังตรวจไฟล์…</p>}
       {docs.map((d) => (

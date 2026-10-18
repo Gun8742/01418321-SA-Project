@@ -21,7 +21,8 @@ export function MedicalView({
   employment: Employment;
   entryId?: string;
 }) {
-  const { data, mutate, grants } = useDemo();
+  const { data, mutate, hasCapability } = useDemo();
+  const grants = hasCapability("medical:record-evidence", employment.id);
   const entries = data.entries.filter(
     (e) => e.employmentId === employment.id && e.entryResult === "ALLOWED",
   );
@@ -230,6 +231,7 @@ export function MedicalView({
                   doctorName: v.doctorName,
                   issuedAt: v.issuedAt,
                   certificateNo: v.certificateNo,
+                  sourceDocumentId: v.file,
                   fileName: docs.find((d) => d.id === v.file)?.fileName ?? "",
                 })
               }
