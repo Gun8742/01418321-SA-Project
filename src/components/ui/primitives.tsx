@@ -14,6 +14,7 @@ import {
   type OperationResult,
 } from "@/features/demo/model";
 import { validateDemoFile } from "@/features/demo/files";
+import { registerHistoryGuard } from "@/lib/history-guard";
 
 export function Heading({
   title,
@@ -148,6 +149,15 @@ export function OperationForm({
   const formRef = useRef<HTMLFormElement>(null);
   const dirty = useRef(false);
   useEffect(() => {
+    function allowNavigation() {
+      return (
+        !dirty.current ||
+        window.confirm(
+          "มีข้อมูลที่ยังไม่บันทึก ต้องการทิ้งข้อมูลและเปลี่ยนหน้าหรือไม่?",
+        )
+      );
+    }
+    const unregisterHistoryGuard = registerHistoryGuard(allowNavigation);
     function beforeUnload(event: BeforeUnloadEvent) {
       if (dirty.current) {
         event.preventDefault();
@@ -160,9 +170,7 @@ export function OperationForm({
         dirty.current &&
         link &&
         link.href !== window.location.href &&
-        !window.confirm(
-          "มีข้อมูลที่ยังไม่บันทึก ต้องการทิ้งข้อมูลและเปลี่ยนหน้าหรือไม่?",
-        )
+        !allowNavigation()
       ) {
         event.preventDefault();
         event.stopPropagation();
@@ -171,6 +179,7 @@ export function OperationForm({
     window.addEventListener("beforeunload", beforeUnload);
     document.addEventListener("click", guardNavigation, true);
     return () => {
+      unregisterHistoryGuard();
       window.removeEventListener("beforeunload", beforeUnload);
       document.removeEventListener("click", guardNavigation, true);
     };

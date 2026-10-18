@@ -58,6 +58,82 @@ async function employer(page: Page) {
     page.getByRole("heading", { name: "รายการลูกจ้าง", exact: true }),
   ).toBeVisible();
 }
+test("dirty employment form guards Back and multi-step traversal without losing Forward history", async ({
+  page,
+}) => {
+  await employer(page);
+  await page
+    .getByRole("link", { name: "เปิดข้อมูล / เลือกการจ้าง", exact: true })
+    .first()
+    .click();
+  await page
+    .getByRole("link", { name: "เลือกการจ้าง 201", exact: true })
+    .click();
+  await expect(page).toHaveURL(/workers\/101\/employments\/201$/);
+  const detailURL = page.url();
+  await page.getByRole("link", { name: "แก้ไขข้อมูล", exact: true }).click();
+  await expect(page).toHaveURL(/workers\/101\/employments\/201\/edit$/);
+  const editURL = page.url();
+  const job = page.getByLabel("ตำแหน่ง", { exact: true });
+  await job.fill("งานสมมติที่ยังไม่บันทึก");
+  for (const distance of [-1, -2]) {
+    await Promise.all([
+      page.waitForEvent("dialog").then(async (dialog) => {
+        expect(dialog.message()).toContain("มีข้อมูลที่ยังไม่บันทึก");
+        await dialog.dismiss();
+      }),
+      page.evaluate((steps) => history.go(steps), distance),
+    ]);
+    await expect(page).toHaveURL(editURL);
+    await expect(job).toHaveValue("งานสมมติที่ยังไม่บันทึก");
+  }
+  await Promise.all([
+    page.waitForEvent("dialog").then((dialog) => dialog.accept()),
+    page.evaluate(() => history.back()),
+  ]);
+  await expect(page).toHaveURL(detailURL);
+  await page.goForward();
+  await expect(page).toHaveURL(editURL);
+  await expect(page.getByLabel("ตำแหน่ง", { exact: true })).not.toHaveValue(
+    "งานสมมติที่ยังไม่บันทึก",
+  );
+  let dialogs = 0;
+  page.on("dialog", async (dialog) => {
+    dialogs++;
+    await dialog.dismiss();
+  });
+  await page.goBack();
+  await expect(page).toHaveURL(detailURL);
+  expect(dialogs).toBe(0);
+  page.removeAllListeners("dialog");
+  await page.getByRole("link", { name: "แก้ไขข้อมูล", exact: true }).click();
+  await expect(page).toHaveURL(editURL);
+  await page
+    .getByLabel("ตำแหน่ง", { exact: true })
+    .fill("ตำแหน่งที่บันทึกแล้ว");
+  await page
+    .getByRole("button", { name: "บันทึกข้อมูลลูกจ้างและการจ้าง", exact: true })
+    .click();
+  await expect(page).toHaveURL(detailURL);
+  await page.goBack();
+  await expect(page).toHaveURL(editURL);
+  await page
+    .getByLabel("ตำแหน่ง", { exact: true })
+    .fill("ข้อมูลใหม่ที่ยังไม่บันทึก");
+  await Promise.all([
+    page.waitForEvent("dialog").then((dialog) => dialog.dismiss()),
+    page.evaluate(() => history.forward()),
+  ]);
+  await expect(page).toHaveURL(editURL);
+  await expect(page.getByLabel("ตำแหน่ง", { exact: true })).toHaveValue(
+    "ข้อมูลใหม่ที่ยังไม่บันทึก",
+  );
+  await Promise.all([
+    page.waitForEvent("dialog").then((dialog) => dialog.accept()),
+    page.evaluate(() => history.forward()),
+  ]);
+  await expect(page).toHaveURL(detailURL);
+});
 async function worker(page: Page) {
   await page.goto("/login");
   await page
@@ -343,6 +419,35 @@ test("UC01 and UC05/06 fix missing documents and distinguish submission evidence
     page.getByText("รอยืนยันการยื่น", { exact: true }).first(),
   ).toBeVisible();
   await submit(page);
+  const history = page.locator("section").filter({
+    has: page.getByRole("heading", {
+      name: "ประวัติการติดตามคำร้อง",
+      exact: true,
+    }),
+  });
+  await expect(history.getByRole("button", { name: /^ดูเอกสาร/ })).toHaveCount(
+    1,
+  );
+  await page
+    .getByRole("button", { name: "บันทึกผลตามหลักฐาน", exact: true })
+    .click();
+  await expect(history.getByText("PENDING", { exact: true })).toBeVisible();
+  await expect(history.getByRole("button", { name: /^ดูเอกสาร/ })).toHaveCount(
+    1,
+  );
+  await history.screenshot({
+    path: ".impeccable/review/application-history-desktop.png",
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await history.screenshot({
+    path: ".impeccable/review/application-history-mobile.png",
+  });
+  await page.setViewportSize({ width: 1440, height: 960 });
   await approve(page);
   await attachIssued(page);
   await page.goto("/employer/visa/2021");

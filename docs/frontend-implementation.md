@@ -49,6 +49,18 @@ Browser state เดิมเติมค่า unknown โดยไม่ลบ
 ผล regression ล่าสุด: Unit tests 47 / 8 files และ Chromium E2E 10 tests ผ่าน
 เพิ่มภาพตรวจ conditional checklist ที่ 1440/390 px; ไม่มี horizontal overflow
 
+### PR #3 review corrections รอบสอง
+
+แก้ต่อจาก `1e909eb`: `recordSubmission` ตรวจ source Precondition ซ้ำก่อนเขียนข้อมูล จึงใช้ review เก่าข้ามผลเข้าเมืองหรือวันที่ใบรับรองที่ไม่ถูกต้องไม่ได้
+หลักฐานคำร้องเป็นรายการอ้างอิงสะสมแบบไม่ซ้ำ; แต่ละ submission/decision event เก็บรายการหลักฐานของตัวเอง พร้อมเลขรับ หน่วยงาน และวันที่ตามเหตุการณ์
+การติดตาม PENDING โดยไม่เลือกไฟล์ไม่ล้างหลักฐานรับคำขอเดิม และ UI เปิดหลักฐานจากประวัติแต่ละเหตุการณ์ได้
+ประวัติเก่าที่ยังไม่มี event metadata ยังคงอ่านได้ แต่ไม่สามารถสร้างการจำแนกเหตุการณ์ย้อนหลังจากข้อมูลที่ไม่ได้เก็บไว้
+
+Dirty form guard ติดตั้งก่อน Next Router listeners โดยติด index ใน history state เดิม; ยกเลิก Back/Forward แล้วคืนตำแหน่งเดิมโดยไม่เพิ่ม entry หลอก
+รองรับ history.go หลายขั้น, ยืนยันออก, ยกเลิกออก, Forward ที่ยังใช้ได้หลังยกเลิก และไม่เตือนเมื่อฟอร์มสะอาด/บันทึกสำเร็จ
+ผลล่าสุด Unit tests 52 / 10 files และ Chromium E2E 11 tests ผ่าน; ตรวจภาพประวัติหลักฐานที่ 1440/390 px ไม่มี page overflow
+Production build ผ่าน และรันซ้ำ 2 E2E ที่กระทบ History/ประวัติหลักฐานกับ `next start` ผ่านด้วย; ยังไม่ได้ตรวจ browser นอก Chromium
+
 Mock ปิดโดย default และเก็บข้อมูลใน browser เท่านั้น; ข้อมูลหายได้เมื่อ reset/ล้าง storage
 ไฟล์เลือกเข้าได้เฉพาะ metadata หลังตรวจชนิด/ขนาด ไม่มี upload bytes ไป Server
 Preview/Download ใช้ข้อมูลสังเคราะห์ ไม่ได้แสดงหรือสร้างเอกสารราชการ

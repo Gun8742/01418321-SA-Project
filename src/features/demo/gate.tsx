@@ -1,6 +1,7 @@
 "use client";
-import type { ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 import { DemoProvider } from "./context";
+import { installHistoryGuard } from "../../lib/history-guard";
 export function DemoGate({
   enabled,
   children,
@@ -8,6 +9,10 @@ export function DemoGate({
   enabled: boolean;
   children: ReactNode;
 }) {
+  // Register before Next Router can unmount a dirty form on popstate.
+  useLayoutEffect(() => {
+    if (enabled) installHistoryGuard();
+  }, [enabled]);
   if (!enabled)
     return (
       <main className="standalone stack">
