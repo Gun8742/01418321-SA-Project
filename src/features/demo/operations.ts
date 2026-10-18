@@ -386,6 +386,13 @@ function recordSubmission(data: DemoData, actor: Actor, raw: unknown) {
     .parse(raw);
   const stage = findStage(data, actor, input.documentSetId);
   currentVersion(stage.version, input.expectedVersion);
+  const blocker = preparationBlocker(
+    data,
+    stage.employmentId,
+    stage.type,
+    stage.caseKey,
+  );
+  requireRule(!blocker, blocker ?? "");
   const visaBlocker = visaReviewBlocker(stage);
   requireRule(!visaBlocker, visaBlocker ?? "");
   currentVersion(stage.application.version, input.expectedApplicationVersion);
