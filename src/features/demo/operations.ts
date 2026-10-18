@@ -117,7 +117,18 @@ export function preparationBlocker(
       (h) =>
         h.entryId === entry?.id &&
         h.resultStatus === "COMPLETE" &&
-        h.certificateDocumentId,
+        entry &&
+        dateSchema.safeParse(entry.actualArrivalAt).success &&
+        dateSchema.safeParse(h.examDate).success &&
+        h.examDate >= entry.actualArrivalAt &&
+        data.documents.some(
+          (d) =>
+            d.id === h.certificateDocumentId &&
+            d.type === "CERTIFICATE" &&
+            d.employmentId === employmentId &&
+            dateSchema.safeParse(d.issuedAt).success &&
+            d.issuedAt >= h.examDate,
+        ),
     );
     if (!entry || !health)
       return "กรณีหลังเข้าประเทศ ต้องมีผลอนุญาตเข้าเมืองและใบรับรองแพทย์ที่ยืนยันแล้ว";
@@ -765,6 +776,11 @@ function saveHealthVisit(data: DemoData, actor: Actor, raw: unknown) {
   requireRule(entry, "ไม่พบผลเข้าเมือง", "NOT_FOUND");
   scopedEmployment(data, actor, entry.employmentId);
   requireRule(entry.entryResult === "ALLOWED", "ต้องมีผลอนุญาตเข้าประเทศก่อน");
+  requireRule(
+    dateSchema.safeParse(entry.actualArrivalAt).success &&
+      input.examDate >= entry.actualArrivalAt,
+    "วันที่ตรวจต้องไม่ก่อนวันที่เข้าประเทศตามหลักฐาน",
+  );
   const existing = data.healthChecks.find((h) => h.id === input.healthCheckId);
   if (input.healthCheckId) {
     requireRule(
@@ -873,6 +889,11 @@ function confirmMedicalCertificate(
   requireRule(
     health.resultStatus === "COMPLETE" && !health.pendingItems,
     "ยังมีผลตรวจคงค้าง",
+  );
+  requireRule(
+    dateSchema.safeParse(health.examDate).success &&
+      input.issuedAt >= health.examDate,
+    "วันที่ออกใบรับรองต้องไม่ก่อนวันที่ตรวจ",
   );
   requireRule(!health.certificateDocumentId, "มีใบรับรองแล้ว", "CONFLICT");
   const id = allocate(data);
