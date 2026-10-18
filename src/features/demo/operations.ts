@@ -416,7 +416,12 @@ function recordSubmission(data: DemoData, actor: Actor, raw: unknown) {
   a.authority = input.authority;
   a.receiptNo = input.receiptNo;
   a.submittedAt = input.submittedAt;
-  a.evidenceDocumentIds = input.acceptedEvidenceDocumentIds;
+  a.evidenceDocumentIds = [
+    ...new Set([
+      ...a.evidenceDocumentIds,
+      ...input.acceptedEvidenceDocumentIds,
+    ]),
+  ];
   a.submissionStatus = confirmed
     ? "SUBMITTED"
     : "AWAITING_SUBMISSION_CONFIRMATION";
@@ -428,6 +433,11 @@ function recordSubmission(data: DemoData, actor: Actor, raw: unknown) {
       ? "บันทึกหลักฐานรับคำขอ / รอพิจารณา"
       : "รอยืนยันหลักฐานรับคำขอ",
     at: new Date().toISOString(),
+    eventType: "SUBMISSION",
+    evidenceDocumentIds: [...input.acceptedEvidenceDocumentIds],
+    authority: input.authority,
+    receiptNo: input.receiptNo,
+    eventDate: input.submittedAt,
   });
   return a.id;
 }
@@ -487,7 +497,9 @@ function recordDecision(data: DemoData, actor: Actor, raw: unknown) {
   a.reason = input.reason;
   a.requestedItems = input.requestedItems;
   a.decidedAt = input.decision === "PENDING" ? "" : input.decidedAt;
-  a.evidenceDocumentIds = input.evidenceDocumentIds;
+  a.evidenceDocumentIds = [
+    ...new Set([...a.evidenceDocumentIds, ...input.evidenceDocumentIds]),
+  ];
   a.version++;
   stage.version++;
   if (input.decision === "ADDITIONAL_DOCUMENTS") {
@@ -502,6 +514,9 @@ function recordDecision(data: DemoData, actor: Actor, raw: unknown) {
   a.history.push({
     label: input.decision + (input.reason ? ": " + input.reason : ""),
     at: new Date().toISOString(),
+    eventType: "DECISION",
+    evidenceDocumentIds: [...input.evidenceDocumentIds],
+    eventDate: input.decidedAt,
   });
   return a.id;
 }

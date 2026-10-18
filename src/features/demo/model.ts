@@ -135,7 +135,17 @@ export const stageSchema = z.object({
     requestedItems: z.string(),
     evidenceDocumentIds: z.array(idSchema),
     issuedDocumentId: idSchema.nullable(),
-    history: z.array(z.object({ label: z.string(), at: z.string() })),
+    history: z.array(
+      z.object({
+        label: z.string(),
+        at: z.string(),
+        eventType: z.enum(["SUBMISSION", "DECISION"]).optional(),
+        evidenceDocumentIds: z.array(idSchema).optional(),
+        authority: z.string().optional(),
+        receiptNo: z.string().optional(),
+        eventDate: z.string().optional(),
+      }),
+    ),
   }),
 });
 export type Stage = z.infer<typeof stageSchema>;

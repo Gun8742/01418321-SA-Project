@@ -570,7 +570,20 @@ function ApplicationView({ stage }: { stage: Stage }) {
         {a.history.length ? (
           a.history.map((h, i) => (
             <div key={i} className="document-row">
-              <strong>{h.label}</strong>
+              <div className="stack-tight">
+                <strong>{h.label}</strong>
+                {h.receiptNo && (
+                  <p className="muted small">
+                    เลขรับ {h.receiptNo} · {h.authority} · {h.eventDate}
+                  </p>
+                )}
+                {h.evidenceDocumentIds?.map((id) => {
+                  const document = docs.find((d) => d.id === id);
+                  return document ? (
+                    <DocumentPreview key={id} doc={document} />
+                  ) : null;
+                })}
+              </div>
               <span className="muted small">
                 {new Date(h.at).toLocaleString("th-TH")}
               </span>
