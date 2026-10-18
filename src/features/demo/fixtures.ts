@@ -11,6 +11,9 @@ export function emptyStage(
     caseKey: type === "WORK_PERMIT" ? "AFTER_ENTRY" : "BEFORE_ENTRY",
     country: "อินเดีย",
     authority: "หน่วยงานตัวอย่าง",
+    visaType: "",
+    workHistory: null,
+    taxEvidenceRequired: null,
     version: 1,
     readinessStatus: "NOT_READY",
     checklistVersion: "DEMO-1",
@@ -128,6 +131,10 @@ export function createDemoData(scenario: DemoScenario = "initial"): DemoData {
       if (type !== "PRE_ARRIVAL" && type !== "VISA" && type !== "WORK_PERMIT")
         continue;
       const stage = emptyStage(String(Number(e.id) * 10 + index), e.id, type);
+      if (type === "VISA" && e.id !== "202" && e.id !== "204") {
+        stage.visaType = "NON_B (สมมติ)";
+        stage.workHistory = false;
+      }
       data.stages.push(stage);
       if (e.id === "202" || e.id === "204") continue;
       if (

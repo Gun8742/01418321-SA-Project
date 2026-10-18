@@ -166,6 +166,55 @@ function CasePreparation({ stage }: { stage: Stage }) {
       value: stage.authority,
       required: true,
     },
+    ...(stage.type === "VISA"
+      ? [
+          {
+            name: "visaType",
+            label: "ประเภท Visa",
+            value: stage.visaType,
+            required: true,
+          },
+          {
+            name: "workHistory",
+            label: "เคยทำงานในประเทศไทยหรือไม่",
+            type: "select" as const,
+            value:
+              stage.workHistory === null
+                ? "UNKNOWN"
+                : stage.workHistory
+                  ? "YES"
+                  : "NO",
+            options: [
+              { value: "UNKNOWN", label: "ยังไม่ระบุ" },
+              { value: "YES", label: "เคยทำงานในไทย" },
+              { value: "NO", label: "ไม่เคยทำงานในไทย" },
+            ],
+          },
+          ...(stage.workHistory === true
+            ? [
+                {
+                  name: "taxEvidenceRequired",
+                  label: "คำร้องนี้เข้าเงื่อนไขต้องใช้ ภ.ง.ด.91 หรือไม่",
+                  type: "select" as const,
+                  value:
+                    stage.taxEvidenceRequired === null
+                      ? "UNKNOWN"
+                      : stage.taxEvidenceRequired
+                        ? "YES"
+                        : "NO",
+                  options: [
+                    { value: "UNKNOWN", label: "ยังไม่ได้ตรวจรายการของคำร้อง" },
+                    {
+                      value: "YES",
+                      label: "ต้องใช้ตามรายการของคำร้อง (สาธิต)",
+                    },
+                    { value: "NO", label: "ไม่เข้าเงื่อนไข (สาธิต)" },
+                  ],
+                },
+              ]
+            : []),
+        ]
+      : []),
     ...(stage.type === "WORK_PERMIT"
       ? [
           {
@@ -202,6 +251,15 @@ function CasePreparation({ stage }: { stage: Stage }) {
         Checklist DEMO-1 เป็นตัวอย่างตามกรณี
         ไม่ใช่รายการเอกสารราชการที่ยืนยันแล้ว (O-03)
       </Banner>
+      {stage.type === "VISA" && (
+        <Banner>
+          เลือกประเภท Visa สถานทูต ประเทศ และประวัติทำงาน แล้วบันทึกเพื่อปรับ
+          Checklist ก่อนเลือกเอกสารเพิ่ม หากเคยทำงาน ต้องมีใบอนุญาตเดิม;
+          ภ.ง.ด.91 ใช้เมื่อเข้าเงื่อนไขของคำร้องที่ตรวจแล้วเท่านั้น
+          การเลือกเงื่อนไขนี้เป็นการจำลอง ยังไม่มี catalog สถานทูตที่ยืนยัน
+          (O-03)
+        </Banner>
+      )}
       <Panel title="ข้อมูลและเอกสารประกอบตามกรณี">
         {locked && (
           <Banner>
@@ -221,6 +279,20 @@ function CasePreparation({ stage }: { stage: Stage }) {
               country: v.country,
               authority: v.authority,
               caseKey: v.caseKey ?? stage.caseKey,
+              ...(stage.type === "VISA"
+                ? {
+                    visaType: v.visaType,
+                    workHistory:
+                      v.workHistory === "UNKNOWN"
+                        ? null
+                        : v.workHistory === "YES",
+                    taxEvidenceRequired:
+                      v.taxEvidenceRequired === undefined ||
+                      v.taxEvidenceRequired === "UNKNOWN"
+                        ? null
+                        : v.taxEvidenceRequired === "YES",
+                  }
+                : {}),
               items: stage.items.map((i) => ({
                 requirementKey: i.requirementKey,
                 documentId: v[i.requirementKey] || null,

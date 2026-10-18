@@ -38,6 +38,17 @@ Read DTO และ Mock state ยังต้อง mapping เข้ากั�
 
 ## ข้อจำกัดและการเชื่อมต่อครั้งถัดไป
 
+### PR #3 review corrections
+
+แก้ต่อจาก `daa4285`: invalidate review ข้าม Employment เมื่อข้อมูล Worker ร่วมเปลี่ยน; คงคำขอที่อยู่ระหว่างพิจารณาหรือมีผลแล้วไว้
+ตรวจวันตรวจไม่ก่อนเข้าเมืองและวันออกใบรับรองไม่ก่อนวันตรวจ รวมถึง gate ของหลักฐานเก่าที่เก็บใน browser
+UC-05 เพิ่ม `visaType`, `workHistory` และ `taxEvidenceRequired`; เพิ่ม/ถอดรายการใบอนุญาตเดิมกับ ภ.ง.ด.91 ตามกรณี แล้วบังคับ review ใหม่
+Browser state เดิมเติมค่า unknown โดยไม่ลบข้อมูล แต่ Visa ที่ยังไม่ระบุกรณีจะยื่นด้วย review เก่าไม่ได้
+ค่า tax applicability เป็นการเลือกเพื่อจำลองเงื่อนไข ยังไม่มี catalog สถานทูตจริงที่อนุมัติ (O-03); ไม่บังคับ ภ.ง.ด.91 ทุกคน
+
+ผล regression ล่าสุด: Unit tests 47 / 8 files และ Chromium E2E 10 tests ผ่าน
+เพิ่มภาพตรวจ conditional checklist ที่ 1440/390 px; ไม่มี horizontal overflow
+
 Mock ปิดโดย default และเก็บข้อมูลใน browser เท่านั้น; ข้อมูลหายได้เมื่อ reset/ล้าง storage
 ไฟล์เลือกเข้าได้เฉพาะ metadata หลังตรวจชนิด/ขนาด ไม่มี upload bytes ไป Server
 Preview/Download ใช้ข้อมูลสังเคราะห์ ไม่ได้แสดงหรือสร้างเอกสารราชการ

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { emptyStage } from "./fixtures";
 import { businessDate } from "../../lib/date";
+import { visaChecklistItems, visaReviewBlocker } from "./visa-checklist";
 import {
   dateSchema,
   employmentFieldsSchema,
@@ -276,6 +277,9 @@ function savePreparation(data: DemoData, actor: Actor, raw: unknown) {
       country: requiredText,
       authority: requiredText,
       caseKey: z.enum(["BEFORE_ENTRY", "AFTER_ENTRY"]),
+      visaType: z.string().trim().max(200).optional(),
+      workHistory: z.boolean().nullable().optional(),
+      taxEvidenceRequired: z.boolean().nullable().optional(),
       items: z.array(
         z.strictObject({
           requirementKey: z.string(),
@@ -316,6 +320,18 @@ function savePreparation(data: DemoData, actor: Actor, raw: unknown) {
   stage.country = input.country;
   stage.authority = input.authority;
   stage.caseKey = input.caseKey;
+  if (stage.type === "VISA") {
+    stage.visaType = input.visaType ?? stage.visaType;
+    stage.workHistory =
+      input.workHistory === undefined ? stage.workHistory : input.workHistory;
+    stage.taxEvidenceRequired =
+      stage.workHistory === true
+        ? input.taxEvidenceRequired === undefined
+          ? stage.taxEvidenceRequired
+          : input.taxEvidenceRequired
+        : null;
+    stage.items = visaChecklistItems(stage);
+  }
   stage.readinessStatus = stage.items.some((i) => i.required && !i.documentId)
     ? "NOT_READY"
     : "AWAITING_REVIEW";
@@ -333,6 +349,8 @@ function reviewDocumentSet(data: DemoData, actor: Actor, raw: unknown) {
     .parse(raw);
   const stage = findStage(data, actor, input.documentSetId);
   currentVersion(stage.version, input.expectedVersion);
+  const visaBlocker = visaReviewBlocker(stage);
+  requireRule(!visaBlocker, visaBlocker ?? "");
   const blocker = preparationBlocker(
     data,
     stage.employmentId,
@@ -368,6 +386,8 @@ function recordSubmission(data: DemoData, actor: Actor, raw: unknown) {
     .parse(raw);
   const stage = findStage(data, actor, input.documentSetId);
   currentVersion(stage.version, input.expectedVersion);
+  const visaBlocker = visaReviewBlocker(stage);
+  requireRule(!visaBlocker, visaBlocker ?? "");
   currentVersion(stage.application.version, input.expectedApplicationVersion);
   requireRule(
     stage.readinessStatus === "READY",

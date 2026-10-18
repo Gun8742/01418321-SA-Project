@@ -122,6 +122,12 @@ async function attachIssued(page: Page) {
   await expect(page.getByLabel("เลขที่เอกสาร", { exact: true })).toHaveCount(0);
 }
 async function prepare(page: Page) {
+  if (await page.getByLabel("ประเภท Visa", { exact: true }).count()) {
+    await page.getByLabel("ประเภท Visa", { exact: true }).fill("NON_B (สมมติ)");
+    await page
+      .getByLabel("เคยทำงานในประเทศไทยหรือไม่", { exact: true })
+      .selectOption("NO");
+  }
   for (const label of [
     "หนังสือเดินทาง (จำเป็น)",
     "สัญญาจ้าง / หนังสือรับเข้าทำงาน (จำเป็น)",
@@ -141,6 +147,89 @@ async function prepare(page: Page) {
     "พร้อมยื่น",
   );
 }
+test("UC05 builds conditional historical Visa checklist before review", async ({
+  page,
+}) => {
+  await employer(page);
+  await page.goto("/employer/visa");
+  await page
+    .getByLabel("ลูกจ้าง / การจ้าง", { exact: true })
+    .selectOption("201");
+  await page
+    .getByRole("button", { name: "สร้างชุดคำขอใหม่", exact: true })
+    .click();
+  await page.getByLabel("ประเภท Visa", { exact: true }).fill("NON_B (สมมติ)");
+  await page
+    .getByLabel("เคยทำงานในประเทศไทยหรือไม่", { exact: true })
+    .selectOption("YES");
+  await page
+    .getByRole("button", { name: "บันทึกชุดเอกสาร", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("ใบอนุญาตทำงานเดิม (จำเป็น)", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByLabel("คำร้องนี้เข้าเงื่อนไขต้องใช้ ภ.ง.ด.91 หรือไม่", {
+      exact: true,
+    })
+    .selectOption("YES");
+  await page
+    .getByRole("button", { name: "บันทึกชุดเอกสาร", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("ภ.ง.ด.91 (จำเป็น)", { exact: true }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "ตรวจทานและยืนยันความครบถ้วน", exact: true })
+    .click();
+  await expect(page.locator("form [role=alert]")).toContainText("เอกสารไม่ครบ");
+  for (const label of [
+    "หนังสือเดินทาง (จำเป็น)",
+    "สัญญาจ้าง / หนังสือรับเข้าทำงาน (จำเป็น)",
+    "เอกสารบริษัท / หนังสือมอบอำนาจตามกรณี (จำเป็น)",
+    "ใบอนุญาตทำงานเดิม (จำเป็น)",
+    "ภ.ง.ด.91 (จำเป็น)",
+  ])
+    await evidence(page, label);
+  await page
+    .getByRole("button", { name: "บันทึกชุดเอกสาร", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "ตรวจทานและยืนยันความครบถ้วน", exact: true })
+    .click();
+  await expect(page.locator(".readiness-status .badge")).toHaveText(
+    "พร้อมยื่น",
+  );
+  await page.screenshot({
+    path: ".impeccable/review/visa-conditional-desktop.png",
+    fullPage: true,
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({
+    path: ".impeccable/review/visa-conditional-mobile.png",
+    fullPage: true,
+  });
+  await page
+    .getByLabel("เคยทำงานในประเทศไทยหรือไม่", { exact: true })
+    .selectOption("NO");
+  await page
+    .getByRole("button", { name: "บันทึกชุดเอกสาร", exact: true })
+    .click();
+  await expect(
+    page.getByLabel("ภ.ง.ด.91 (จำเป็น)", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("ใบอนุญาตทำงานเดิม (จำเป็น)", { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator(".readiness-status .badge")).toHaveText(
+    "รอตรวจทาน",
+  );
+});
 async function submit(page: Page) {
   await page
     .getByLabel("วันที่รับคำขอ (เมื่อมีหลักฐาน)", { exact: true })
