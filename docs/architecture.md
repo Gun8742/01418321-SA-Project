@@ -4,7 +4,7 @@
 
 ใช้ Modular Monolith แบบ Feature-based: Next.js Full-stack หนึ่งแอป แยก Module ตามพฤติกรรมธุรกิจ ไม่แยกตาม Actor หรือสร้างบริการแยกสำหรับแต่ละ UC
 
-นี่คือโครงสร้างเริ่มต้นสำหรับพัฒนา ยังไม่มี runtime, dependencies, Database schema หรือ application implementation
+โครงสร้างด้านล่างเป็นแบบแปลนเริ่มต้น ปัจจุบันมี Mock Frontend runtime แล้ว; Database schema และ Backend ยังไม่มี implementation
 ไฟล์ `.gitkeep` มีไว้ให้ Git เก็บ Directory ว่าง เมื่อมีไฟล์จริงใน Directory นั้นให้ลบ placeholder ออก
 
 ## Directory ที่เตรียมไว้
@@ -55,9 +55,16 @@
     └── e2e/
 ```
 
-เมื่อสร้าง Next.js application ให้เพิ่ม root layout, pages, global styles และ config ตามเวอร์ชันที่ติดตั้งจริง
-Directory ใน `app/` เป็นพื้นที่เตรียมไว้ ยังไม่ได้สร้าง route ที่ทำงานได้
+มี root layout, pages, global styles และ config ของ Next.js แล้ว; Employer/Worker ใช้ route adapters ประกอบ Feature views
+บาง Directory ยังเป็น placeholder สำหรับ Backend integration
 เส้นทาง `/worker` เป็นภาพรวมลูกจ้าง ส่วน `/employer` เป็นจุดเข้าสู่พื้นที่นายจ้าง; รายละเอียด routes ให้ตามหน้าจอของ UC ที่กำลังทำ
+
+## Mock Frontend ปัจจุบัน
+
+`features/demo/` เป็น browser-only adapter สำหรับ fixtures, operations, state และ demo principal; ไม่ใช่ Server authorization
+Feature views ใน workers/documents/travel/medical เรียก named operations ผ่าน DemoProvider และใช้ shared UI ใน components
+เปิดเฉพาะเมื่อ NEXT_PUBLIC_ENABLE_MOCK=true; การเชื่อม Server ต้องแทน mock/read mapping และใช้กฎสิทธิ์/transactions จริงตาม Backend Spec
+ตัวอย่างโครงสร้าง Server ด้านล่างเป็นแผน integration ยังไม่ใช่ implementation ของฐานข้อมูล
 
 ## หน้าที่และ Dependency
 
