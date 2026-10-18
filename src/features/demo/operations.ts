@@ -176,9 +176,30 @@ function saveWorkerEmployment(data: DemoData, actor: Actor, raw: unknown) {
     requireRule(w, "ไม่พบลูกจ้าง", "NOT_FOUND");
     currentVersion(e.version, input.expectedVersions.employment);
     currentVersion(w.version, input.expectedVersions.worker);
+    const profileChanged =
+      JSON.stringify(profileSchema.strip().parse(w)) !==
+      JSON.stringify(input.profile);
+    const employmentChanged =
+      JSON.stringify(employmentFieldsSchema.strip().parse(e)) !==
+      JSON.stringify(input.employment);
+    const affectedEmploymentIds = new Set(
+      data.employments
+        .filter((candidate) =>
+          profileChanged
+            ? candidate.workerId === w.id
+            : employmentChanged && candidate.id === e.id,
+        )
+        .map((candidate) => candidate.id),
+    );
     Object.assign(w, input.profile, { version: w.version + 1 });
     Object.assign(e, input.employment, { version: e.version + 1 });
-    for (const stage of data.stages.filter((s) => s.employmentId === e.id)) {
+    for (const stage of data.stages.filter(
+      (s) =>
+        affectedEmploymentIds.has(s.employmentId) &&
+        ["NOT_DECIDED", "ADDITIONAL_DOCUMENTS"].includes(
+          s.application.decisionStatus,
+        ),
+    )) {
       stage.readinessStatus = "AWAITING_REVIEW";
       stage.version++;
     }
