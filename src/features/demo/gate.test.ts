@@ -9,6 +9,6 @@ it("does not render demo children unless the feature flag is explicitly enabled"
       children: createElement("p", null, "SYNTHETIC_SECRET_SCREEN"),
     }),
   );
-  expect(result).toContain("โหมดสาธิตปิดอยู่");
+  expect(result).toContain("ยังไม่ได้เปิดใช้งานระบบ");
   expect(result).not.toContain("SYNTHETIC_SECRET_SCREEN");
 });

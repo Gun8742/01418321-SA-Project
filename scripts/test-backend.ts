@@ -1,4 +1,6 @@
 import "dotenv/config";
+process.env.CASE_POLICY_VERSION = "DEMO-1";
+process.env.EXTERNAL_RESULTS_BY_EMPLOYER = "false";
 import { Client } from "pg";
 import { spawnSync } from "node:child_process";
 import { CreateBucketCommand } from "@aws-sdk/client-s3";

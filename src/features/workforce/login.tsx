@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemo } from "../demo/context";
@@ -14,15 +15,22 @@ export function BackendLogin() {
     setSaving(true);
     const requestId = crypto.randomUUID();
     try {
-      const response = await fetch("/api/auth/sign-in/username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: values.username,
-          password: values.password,
-        }),
-        credentials: "same-origin",
-      });
+      const response = await fetch(
+        values.username.includes("@")
+          ? "/api/auth/sign-in/email"
+          : "/api/auth/sign-in/username",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...(values.username.includes("@")
+              ? { email: values.username.trim().toLowerCase() }
+              : { username: values.username }),
+            password: values.password,
+          }),
+          credentials: "same-origin",
+        },
+      );
       if (response.status >= 500) throw new Error("Authentication unavailable");
       if (!response.ok)
         return {
@@ -67,7 +75,8 @@ export function BackendLogin() {
       <section className="login-form stack">
         <h1>เข้าสู่ระบบ</h1>
         <Banner>
-          ใช้บัญชีที่ผู้ดูแลจัดเตรียมให้ · การยื่นและการพิจารณาเกิดภายนอกระบบ
+          ใช้ชื่อบัญชีหรืออีเมลที่ยืนยันแล้ว ·
+          การยื่นและการพิจารณาเกิดภายนอกระบบ
         </Banner>
         <OperationForm
           key="backend-login"
@@ -84,6 +93,7 @@ export function BackendLogin() {
           submitLabel={saving ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
           onSave={signIn}
         />
+        <Link href="/forgot-password">ลืมรหัสผ่าน</Link>
       </section>
     </main>
   );

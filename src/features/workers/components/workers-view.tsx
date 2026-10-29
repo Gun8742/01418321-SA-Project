@@ -94,7 +94,7 @@ function WorkerEditor({
       value:
         e[name] ??
         (name === "companyName"
-          ? "บริษัทตัวอย่าง จำกัด"
+          ? (company?.companyName ?? data.employments[0]?.companyName ?? "")
           : name === "wageUnit"
             ? "บาทต่อเดือน"
             : ""),
@@ -173,7 +173,7 @@ function WorkerList() {
       <Heading
         title="รายการลูกจ้าง"
         description="จัดการข้อมูลการจ้างและติดตามเอกสารของลูกจ้างที่คุณมีสิทธิ์"
-        status={"ลูกจ้างตัวอย่าง " + workers.length + " ราย"}
+        status={"ลูกจ้าง " + workers.length + " ราย"}
       />
       <Panel title="ค้นหาลูกจ้าง">
         <form onSubmit={search} className="stack-tight">
@@ -185,7 +185,7 @@ function WorkerList() {
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 maxLength={100}
-                placeholder="ARUN / DEMO-P001"
+                placeholder="ชื่อหรือเลขหนังสือเดินทาง"
               />
             </div>
             <div className="field">
@@ -263,7 +263,7 @@ export function WorkersView({
       <>
         <Heading
           title="เพิ่มข้อมูลลูกจ้างและการจ้าง"
-          description="UC-04 · ใช้ข้อมูลสมมติเท่านั้น"
+          description="ข้อมูลลูกจ้างและการจ้าง"
         />
         <WorkerEditor />
       </>

@@ -269,9 +269,19 @@ export function AppFrame({
             );
           })}
         </nav>
+        {area === "EMPLOYER" && demo.mode === "backend" && (
+          <Link className="nav-link" href="/employer/accounts">
+            เชิญลูกจ้าง
+          </Link>
+        )}
+        {area === "EMPLOYER" && demo.mode === "backend" && (
+          <Link className="nav-link" href="/employer/evidence">
+            หลักฐานเข้าเมืองและสุขภาพ
+          </Link>
+        )}
         <footer>
           <p>
-            ข้อมูลตัวอย่างสมมติ
+            {demo.mode === "mock" ? "ข้อมูลตัวอย่างสมมติ" : "พื้นที่องค์กร"}
             <br />
             {demo.mode === "mock" ? "MOCK FRONTEND" : "ระบบจัดการเอกสาร"}
           </p>
@@ -284,7 +294,9 @@ export function AppFrame({
         <div className="topbar">
           <span className="muted">
             WORKSPACE /{" "}
-            {area === "EMPLOYER" ? "บริษัทตัวอย่าง จำกัด" : "บัญชีของฉัน"}
+            {area === "EMPLOYER"
+              ? (demo.data.employer?.companyName ?? "องค์กรของฉัน")
+              : "บัญชีของฉัน"}
           </span>
           <strong>
             {name}

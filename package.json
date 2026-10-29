@@ -19,7 +19,8 @@
     "test:integration": "node --conditions=react-server --import tsx scripts/test-backend.ts",
     "db:grant": "node --conditions=react-server --import tsx scripts/grant-capability.ts",
     "storage:cleanup": "node --conditions=react-server --import tsx scripts/cleanup-uploads.ts",
-    "test:e2e:backend": "playwright test --config playwright.backend.config.ts"
+    "test:e2e:backend": "playwright test --config playwright.backend.config.ts",
+    "db:bootstrap": "node --conditions=react-server --import tsx scripts/bootstrap.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1152.0",
@@ -29,6 +30,7 @@
     "better-auth": "1.7.10",
     "dotenv": "18.0.8",
     "next": "16.4.2",
+    "nodemailer": "10.3.0",
     "pdf-lib": "1.17.1",
     "pg": "8.23.1",
     "react": "19.3.1",
@@ -40,6 +42,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.0",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "8.23.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

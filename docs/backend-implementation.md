@@ -1,21 +1,23 @@
 # Backend implementation
 
+อัปเดต 29 ตุลาคม 2569: รุ่นทดลองภายในเพิ่ม email enrollment, worker invitations, password reset, INTERNAL-1 และสิทธิ์นายจ้างบันทึกผล อ่าน [คู่มือปัจจุบัน](internal-trial.md) ก่อนใช้ค่าเริ่มต้น/คำสั่งของรุ่น local เดิมด้านล่าง
+
 Backend ใช้ Next.js Route Handlers, PostgreSQL 17/Prisma 7, Better Auth และ S3 API ภายในแอปเดียวกับ Frontend เปิดด้วย `BACKEND_ENABLED=true` และ `NEXT_PUBLIC_ENABLE_MOCK=false` พร้อมกัน; flag ขัดกันจะปิดการทำงาน
 
 ## ขอบเขตที่ทำแล้ว
 
-| งาน / UC | Implementation | การตรวจหลัก |
-|---|---|---|
-| Login, session, scope | `src/server/auth.ts`, `auth-db.ts`, `/api/auth/[...all]` | Native cookie, token hash, refresh, logout/revocation, cross-account denial |
-| ข้อมูลลูกจ้าง/การจ้าง UC-04 | `workforce/operations.ts`, `service.ts`, `write.ts` | Create/update, expected versions, rollback, request replay |
-| เตรียม/ตรวจชุดเอกสาร UC-01,05,06,02 | Shared domain + CasePolicy/Checklist/DocumentSet persistence | Readiness, prerequisite, evidence ownership, review version |
-| ยื่น/ผลพิจารณา UC-01,11,03 | Application + event snapshots | รอยืนยันการยื่น, เอกสารเพิ่มในคำขอเดิม, approval, unique issued slot |
-| รับ Visa/Work Permit UC-07,10 | Immutable DocumentReceipt | ยืนยันรับแยกจาก view/download; unique document/receipt |
-| เดินทาง UC-08 | EntryRecord + scoped CapabilityGrant | Draft/confirm, evidence, permission, optimistic concurrency |
-| ตรวจสุขภาพ UC-09 | HealthCheck + Certificate | Entry gate, result/evidence, confirmed result lock |
-| ไฟล์ส่วนตัว | `server/documents.ts`, `storage.ts` | Real PDF/JPEG/PNG bytes, size/checksum, owner/scope, retries, cleanup |
-| Queries / corrections | `workforce/queries.ts`, shared domain | Scoped pagination/filtering, correction resolution ไม่แก้เอกสารต้นฉบับ |
-| Browser integration | `workforce/provider.tsx`, `login.tsx` | Login, persistent update/reload, upload/download, Worker denied Employer route |
+| งาน / UC                            | Implementation                                               | การตรวจหลัก                                                                    |
+| ----------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Login, session, scope               | `src/server/auth.ts`, `auth-db.ts`, `/api/auth/[...all]`     | Native cookie, token hash, refresh, logout/revocation, cross-account denial    |
+| ข้อมูลลูกจ้าง/การจ้าง UC-04         | `workforce/operations.ts`, `service.ts`, `write.ts`          | Create/update, expected versions, rollback, request replay                     |
+| เตรียม/ตรวจชุดเอกสาร UC-01,05,06,02 | Shared domain + CasePolicy/Checklist/DocumentSet persistence | Readiness, prerequisite, evidence ownership, review version                    |
+| ยื่น/ผลพิจารณา UC-01,11,03          | Application + event snapshots                                | รอยืนยันการยื่น, เอกสารเพิ่มในคำขอเดิม, approval, unique issued slot           |
+| รับ Visa/Work Permit UC-07,10       | Immutable DocumentReceipt                                    | ยืนยันรับแยกจาก view/download; unique document/receipt                         |
+| เดินทาง UC-08                       | EntryRecord + scoped CapabilityGrant                         | Draft/confirm, evidence, permission, optimistic concurrency                    |
+| ตรวจสุขภาพ UC-09                    | HealthCheck + Certificate                                    | Entry gate, result/evidence, confirmed result lock                             |
+| ไฟล์ส่วนตัว                         | `server/documents.ts`, `storage.ts`                          | Real PDF/JPEG/PNG bytes, size/checksum, owner/scope, retries, cleanup          |
+| Queries / corrections               | `workforce/queries.ts`, shared domain                        | Scoped pagination/filtering, correction resolution ไม่แก้เอกสารต้นฉบับ         |
+| Browser integration                 | `workforce/provider.tsx`, `login.tsx`                        | Login, persistent update/reload, upload/download, Worker denied Employer route |
 
 ## Transport และข้อตกลงที่ใช้งานจริง
 
@@ -60,7 +62,6 @@ Cleanup เก็บกวาด temporary uploads เก่ากว่า 24 �
 - ต้องตั้ง HTTPS/origin/secret, private bucket policy/encryption, account provisioning, backup/restore, retention และ rate/operational monitoring สำหรับ production เอง ยังไม่ตรวจ deployment จริงหรือผู้ให้บริการ S3 จริง
 - Read snapshot โหลดข้อมูลที่อยู่ใน scope ทั้งชุด เหมาะกับข้อมูลขนาดโครงการ แม้ `listWorkers` มี DB pagination แล้ว
 - ผล unit/integration/E2E เป็นหลักฐาน local synthetic เท่านั้น ไม่ยืนยันกฎหมายหรือการเชื่อมหน่วยงาน; รายการไฟล์และ test assertions คือหลักฐานล่าสุด ห้ามใช้ผล spec checker แทน runtime checks
-
 
 ## ผลตรวจรุ่น local — 18 ตุลาคม 2569
 

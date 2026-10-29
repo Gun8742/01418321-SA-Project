@@ -1,0 +1,40 @@
+name: sa-workforce
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env.server
+    environment:
+      BACKEND_ENABLED: "true"
+      NEXT_PUBLIC_ENABLE_MOCK: "false"
+      DATABASE_URL: postgresql://sa:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@db:5432/sa
+      CASE_POLICY_VERSION: INTERNAL-1
+      EXTERNAL_RESULTS_BY_EMPLOYER: "true"
+      ALLOW_SYNTHETIC_POLICY: "false"
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sa
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sa -d sa"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+volumes:
+  database:

@@ -23,7 +23,9 @@ export function TravelView({
   entryId?: string;
   visaDocumentId?: string;
 }) {
-  const { data, mutate, hasCapability } = useDemo();
+  const { data, actor, mode, mutate, hasCapability } = useDemo();
+  const employer = actor?.role === "EMPLOYER";
+  const travelPath = employer ? "/employer/evidence" : "/worker/travel";
   const grants = hasCapability("entry:record-evidence", employment.id);
   const entries = data.entries.filter((e) => e.employmentId === employment.id);
   const docs = data.documents.filter((d) => d.employmentId === employment.id);
@@ -51,7 +53,8 @@ export function TravelView({
             <div className="document-row" key={v.id}>
               <Link
                 href={
-                  "/worker/travel?employmentId=" +
+                  travelPath +
+                  "?employmentId=" +
                   employment.id +
                   "&visaDocumentId=" +
                   v.id
@@ -73,9 +76,13 @@ export function TravelView({
         </Banner>
         <Link
           className="button"
-          href={"/worker/visa?employmentId=" + employment.id}
+          href={
+            (employer ? "/employer/visa" : "/worker/visa") +
+            "?employmentId=" +
+            employment.id
+          }
         >
-          ไป Visa ของฉัน
+          ดูข้อมูล Visa
         </Link>
       </>
     );
@@ -95,7 +102,7 @@ export function TravelView({
       </Banner>
       <Panel title="แผนเดินทาง">
         {entry && <Badge status={entry.planStatus} />}
-        {canEdit ? (
+        {canEdit && !employer ? (
           <OperationForm
             key={entry?.version ?? "new"}
             fields={[
@@ -177,8 +184,9 @@ export function TravelView({
           />
         ) : (
           <p className="muted">
-            มีผลตรวจเข้าเมืองแล้ว
-            แผนเดิมแสดงเพื่ออ้างอิงและไม่เปิดให้แก้ย้อนหลัง
+            วันที่คาดว่าจะเดินทาง:{" "}
+            {entry?.plannedArrivalAt || "ยังไม่มีแผนจากลูกจ้าง"}
+            {entry?.port && ` · จุดผ่านแดน: ${entry.port}`}
           </p>
         )}
         <p className="small muted">
@@ -204,8 +212,9 @@ export function TravelView({
             </>
           ) : !grants ? (
             <Banner tone="warning">
-              ผู้มี capability เท่านั้นที่บันทึกผลได้ ทดลองได้โดยเปิด “จำลอง
-              capability” ในเครื่องมือสาธิตด้านล่าง
+              {mode === "mock"
+                ? "เปิดจำลอง capability ในเครื่องมือสาธิตเพื่อทดลองบันทึกผล"
+                : "นายจ้างจะบันทึกผลตามหลักฐาน เมื่อได้รับข้อมูลจากการตรวจเข้าเมือง"}
             </Banner>
           ) : (
             <OperationForm
@@ -244,7 +253,11 @@ export function TravelView({
                   options: documentOptions(docs),
                 },
               ]}
-              submitLabel="บันทึกผลตามหลักฐาน (จำลอง)"
+              submitLabel={
+                mode === "mock"
+                  ? "บันทึกผลตามหลักฐาน (จำลอง)"
+                  : "บันทึกผลตามหลักฐาน"
+              }
               onSave={(v) =>
                 mutate("recordEntryResult", {
                   entryId: entry.id,
@@ -262,10 +275,12 @@ export function TravelView({
             <Link
               className="button"
               href={
-                "/worker/medical?employmentId=" +
+                (employer ? "/employer/evidence" : "/worker/medical") +
+                "?employmentId=" +
                 employment.id +
                 "&entryId=" +
-                entry.id
+                entry.id +
+                (employer ? "&section=medical" : "")
               }
             >
               ดำเนินการตรวจสุขภาพ

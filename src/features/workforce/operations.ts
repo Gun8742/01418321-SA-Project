@@ -758,7 +758,6 @@ function recordEntryResult(
   return entry.id;
 }
 function saveHealthVisit(data: DemoData, actor: Actor, raw: unknown) {
-  worker(actor);
   const input = z
     .strictObject({
       ...requestFields,
@@ -899,7 +898,7 @@ function confirmMedicalCertificate(
     employmentId: health.employmentId,
     workerId: health.workerId,
     type: "CERTIFICATE",
-    title: "ใบรับรองแพทย์ตัวอย่าง",
+    title: "ใบรับรองแพทย์",
     fileName: input.fileName,
     documentNo: input.certificateNo,
     issuer: health.hospitalName,

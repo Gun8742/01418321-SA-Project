@@ -4,7 +4,7 @@ import "./globals.css";
 import { DemoGate } from "@/features/demo/gate";
 export const metadata: Metadata = {
   title: "SA / WORKFORCE",
-  description: "ระบบจัดการเอกสารแรงงานต่างด้าว · ข้อมูลสมมติสำหรับสาธิต",
+  description: "ระบบจัดการเอกสารแรงงานต่างด้าว",
 };
 export default function RootLayout({
   children,

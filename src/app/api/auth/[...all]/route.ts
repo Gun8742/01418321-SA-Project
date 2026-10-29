@@ -1,7 +1,13 @@
 import { authentication } from "@/server/auth";
 import { requireBackend } from "@/server/config";
 import { failure, readBody, requireSameOrigin } from "@/server/http";
-const allowed = new Set(["sign-in/email", "sign-in/username", "sign-out"]);
+const allowed = new Set([
+  "sign-in/email",
+  "sign-in/username",
+  "sign-out",
+  "request-password-reset",
+  "reset-password",
+]);
 async function handle(
   request: Request,
   context: { params: Promise<{ all: string[] }> },
@@ -38,3 +44,22 @@ async function handle(
   return new Response(response.body, { status: response.status, headers });
 }
 export const POST = handle;
+
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ all: string[] }> },
+) {
+  const { all } = await context.params;
+  if (all.length !== 2 || all[0] !== "reset-password" || all[1].length > 128)
+    return new Response(null, { status: 404 });
+  try {
+    requireBackend();
+    const response = await authentication().handler(request);
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "private, no-store");
+    headers.set("Referrer-Policy", "no-referrer");
+    return new Response(response.body, { status: response.status, headers });
+  } catch (error) {
+    return failure(error);
+  }
+}

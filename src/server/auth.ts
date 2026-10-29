@@ -1,4 +1,5 @@
 import "server-only";
+import { sendAccountMail } from "./mail";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { username } from "better-auth/plugins";
@@ -24,6 +25,11 @@ export function createAuthentication(provisioning = false) {
       enabled: true,
       disableSignUp: !provisioning,
       minPasswordLength: 12,
+      maxPasswordLength: 128,
+      revokeSessionsOnPasswordReset: true,
+      sendResetPassword: async ({ user, url }) => {
+        await sendAccountMail(user.email, "ตั้งรหัสผ่านใหม่", url);
+      },
     },
     plugins: [username()],
     session: {
@@ -37,6 +43,8 @@ export function createAuthentication(provisioning = false) {
       window: 15 * 60,
       max: 50,
       customRules: {
+        "/request-password-reset": { window: 15 * 60, max: 3 },
+        "/reset-password": { window: 15 * 60, max: 5 },
         "/sign-in/email": { window: 15 * 60, max: 5 },
         "/sign-in/username": { window: 15 * 60, max: 5 },
       },

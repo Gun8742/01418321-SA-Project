@@ -519,3 +519,20 @@ model RateLimit {
 
   @@map("auth_rate_limit")
 }
+
+model Enrollment {
+  id         String   @id
+  digest     String   @unique
+  email      String
+  name       String
+  company    Json?
+  employerId BigInt?
+  inviterId  BigInt?
+  workerId   BigInt?
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@map("enrollment")
+}

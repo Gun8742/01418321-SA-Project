@@ -142,7 +142,7 @@ export function WorkerDocument({
   stage: Stage;
   employment: Employment;
 }) {
-  const { data, mutate } = useDemo();
+  const { data, mode, mutate } = useDemo();
   const [confirmed, setConfirmed] = useState(false);
   const doc = data.documents.find(
     (d) => d.id === stage.application.issuedDocumentId,
@@ -198,7 +198,7 @@ export function WorkerDocument({
                 <Badge status="RECEIVED" />
                 <p>
                   รับเมื่อ {doc.receivedAt} ·{" "}
-                  {doc.receivedChannel || "ข้อมูลตัวอย่าง"}
+                  {doc.receivedChannel || "ตามข้อมูลการรับ"}
                 </p>
               </>
             ) : (
@@ -209,7 +209,7 @@ export function WorkerDocument({
                     checked={confirmed}
                     onChange={(e) => setConfirmed(e.target.checked)}
                   />
-                  ฉันได้รับเอกสารนี้จริงแล้ว (จำลอง)
+                  ฉันได้รับเอกสารนี้จริงแล้ว{mode === "mock" && " (จำลอง)"}
                 </label>
                 <OperationForm
                   fields={[
@@ -223,7 +223,10 @@ export function WorkerDocument({
                     {
                       name: "channel",
                       label: "ช่องทางรับ",
-                      value: "ไฟล์ตัวอย่างในระบบ",
+                      value:
+                        mode === "mock"
+                          ? "ไฟล์ตัวอย่างในระบบ"
+                          : "รับเอกสารดิจิทัลในระบบ",
                       required: true,
                     },
                   ]}

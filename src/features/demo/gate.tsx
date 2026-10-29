@@ -17,10 +17,10 @@ export function DemoGate({
   if (!enabled)
     return (
       <main className="standalone stack">
-        <h1>โหมดสาธิตปิดอยู่</h1>
+        <h1>ยังไม่ได้เปิดใช้งานระบบ</h1>
         <p>
-          แอปนี้เป็น Mock Frontend เท่านั้น หากต้องการทดลองในเครื่อง ให้กำหนด
-          NEXT_PUBLIC_ENABLE_MOCK=true แล้วเริ่มแอปใหม่
+          ตั้งค่า BACKEND_ENABLED=true และเชื่อมต่อฐานข้อมูลตาม README
+          แล้วเริ่มแอปใหม่
         </p>
         <p>ยังไม่ได้เปิดโหมด Backend กรุณาตรวจการตั้งค่าตาม README</p>
       </main>

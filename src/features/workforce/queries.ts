@@ -1,3 +1,4 @@
+import { activeChecklistVersion } from "../../server/policy";
 import "server-only";
 import { z } from "zod";
 import { idSchema } from "./model";
@@ -232,7 +233,7 @@ export async function executeQuery(
     case "getCaseChecklist": {
       scopedEmployment(data, actor, idSchema.parse(input.employmentId));
       const policy = await database().casePolicy.findUnique({
-        where: { version: "DEMO-1" },
+        where: { version: activeChecklistVersion() },
       });
       if (
         !policy?.approved ||

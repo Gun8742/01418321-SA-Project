@@ -1,3 +1,7 @@
+import {
+  activeChecklistVersion,
+  employerRecordsResults,
+} from "../../server/policy";
 import "server-only";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -185,6 +189,11 @@ async function capabilities(
   employmentId?: string,
 ) {
   if (!employmentId) return { entry: false, medical: false };
+  if (employerRecordsResults())
+    return {
+      entry: principal.actor.role === "EMPLOYER",
+      medical: principal.actor.role === "EMPLOYER",
+    };
   const grants = await tx.capabilityGrant.findMany({
     where: {
       actorId: BigInt(principal.actor.accountId),
@@ -223,6 +232,9 @@ export async function executeCommand(principal: Principal, raw: unknown) {
     const grants = await capabilities(tx, principal, employmentId);
     if (
       (operation === "recordEntryResult" && !grants.entry) ||
+      (operation === "saveHealthVisit" &&
+        employerRecordsResults() &&
+        !grants.medical) ||
       (["recordHealthResult", "confirmMedicalCertificate"].includes(
         operation,
       ) &&
@@ -327,7 +339,7 @@ export async function executeCommand(principal: Principal, raw: unknown) {
       throw new Error("ID allocation exhausted");
     if (operation === "createDocumentSet") {
       const policy = await tx.casePolicy.findUnique({
-        where: { version: "DEMO-1" },
+        where: { version: activeChecklistVersion() },
       });
       if (
         !policy?.approved ||
@@ -405,6 +417,21 @@ export async function snapshot(principal: Principal) {
       },
       select: { employmentId: true, capability: true },
     });
+    if (employerRecordsResults()) {
+      grants.length = 0;
+      if (principal.actor.role === "EMPLOYER") {
+        const rows = await tx.employment.findMany({
+          where: employmentScope(principal.actor),
+          select: { id: true },
+        });
+        for (const row of rows)
+          for (const capability of [
+            "entry:record-evidence",
+            "medical:record-evidence",
+          ])
+            grants.push({ employmentId: row.id, capability });
+      }
+    }
     return {
       actor: principal.actor,
       data: clientProjection(

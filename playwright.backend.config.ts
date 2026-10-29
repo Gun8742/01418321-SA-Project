@@ -17,6 +17,12 @@ export default defineConfig({
     timeout: 120000,
     env: {
       BACKEND_ENABLED: "true",
+      CASE_POLICY_VERSION: "INTERNAL-1",
+      EXTERNAL_RESULTS_BY_EMPLOYER: "true",
+      SMTP_HOST: "127.0.0.1",
+      SMTP_PORT: "1025",
+      SMTP_SECURE: "false",
+      MAIL_FROM: "workforce@example.test",
       NEXT_PUBLIC_ENABLE_MOCK: "false",
       NEXT_DIST_DIR: ".next/backend-e2e",
       BETTER_AUTH_URL: "http://127.0.0.1:3187",

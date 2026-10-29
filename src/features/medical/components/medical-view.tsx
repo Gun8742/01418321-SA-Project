@@ -21,7 +21,8 @@ export function MedicalView({
   employment: Employment;
   entryId?: string;
 }) {
-  const { data, mutate, hasCapability } = useDemo();
+  const { data, actor, mode, mutate, hasCapability } = useDemo();
+  const employer = actor?.role === "EMPLOYER";
   const grants = hasCapability("medical:record-evidence", employment.id);
   const entries = data.entries.filter(
     (e) => e.employmentId === employment.id && e.entryResult === "ALLOWED",
@@ -39,10 +40,12 @@ export function MedicalView({
           <Link
             key={e.id}
             href={
-              "/worker/medical?employmentId=" +
+              (employer ? "/employer/evidence" : "/worker/medical") +
+              "?employmentId=" +
               employment.id +
               "&entryId=" +
-              e.id
+              e.id +
+              (employer ? "&section=medical" : "")
             }
           >
             Entry {e.id} · {e.actualArrivalAt}
@@ -58,7 +61,13 @@ export function MedicalView({
           ต้องมีผลอนุญาตเข้าประเทศพร้อมหลักฐานก่อน
           เอกสารแผนเดินทางอย่างเดียวไม่ผ่านเงื่อนไข
         </Banner>
-        <Link href={"/worker/travel?employmentId=" + employment.id}>
+        <Link
+          href={
+            (employer ? "/employer/evidence" : "/worker/travel") +
+            "?employmentId=" +
+            employment.id
+          }
+        >
           กลับการเดินทาง
         </Link>
       </>
@@ -86,10 +95,11 @@ export function MedicalView({
         Work Permit แทนหน่วยงาน
       </Banner>
       <Panel title="ข้อมูลเข้ารับการตรวจ">
-        {locked ? (
+        {locked || (mode === "backend" && !grants) ? (
           <Banner>
-            HEALTH_VISIT_LOCKED · มีผล/หลักฐานแล้ว ไม่เปิดให้เปลี่ยนนัดเพื่อ
-            reset ผลเดิม
+            {locked
+              ? "มีผลหรือหลักฐานแล้ว ไม่เปิดให้เปลี่ยนข้อมูลการตรวจย้อนหลัง"
+              : "รอนายจ้างบันทึกข้อมูลเข้ารับการตรวจจากโรงพยาบาล"}
           </Banner>
         ) : (
           <OperationForm
@@ -142,8 +152,9 @@ export function MedicalView({
           )}
           {!grants && !certificate && (
             <Banner tone="warning">
-              ต้องมี capability บันทึกผล ลองเปิด “จำลอง capability”
-              ในเครื่องมือสาธิตด้านล่าง
+              {mode === "mock"
+                ? "เปิดจำลอง capability ในเครื่องมือสาธิตเพื่อทดลองบันทึกผล"
+                : "รอนายจ้างบันทึกผลตามเอกสารจากโรงพยาบาล"}
             </Banner>
           )}
           {grants && !certificate && (
@@ -176,7 +187,9 @@ export function MedicalView({
                   required: true,
                 },
               ]}
-              submitLabel="บันทึกผลตรวจ (จำลอง)"
+              submitLabel={
+                mode === "mock" ? "บันทึกผลตรวจ (จำลอง)" : "บันทึกผลตรวจ"
+              }
               onSave={(v) =>
                 mutate("recordHealthResult", {
                   healthCheckId: health.id,
@@ -195,8 +208,10 @@ export function MedicalView({
           {certificate ? (
             <>
               <Banner>
-                ยืนยันใบรับรองสมมติแล้ว นายจ้างใช้ในชุด Work Permit
-                หลังเข้าประเทศได้
+                {mode === "mock"
+                  ? "ยืนยันใบรับรองสมมติแล้ว"
+                  : "ยืนยันใบรับรองตามหลักฐานแล้ว"}{" "}
+                นายจ้างใช้ในชุด Work Permit หลังเข้าประเทศได้
               </Banner>
               <DocumentPreview doc={certificate} />
             </>
@@ -217,13 +232,20 @@ export function MedicalView({
                 { name: "certificateNo", label: "เลขที่ใบรับรอง (เมื่อมี)" },
                 {
                   name: "file",
-                  label: "ไฟล์ใบรับรอง (ตัวอย่าง)",
+                  label:
+                    mode === "mock"
+                      ? "ไฟล์ใบรับรอง (ตัวอย่าง)"
+                      : "ไฟล์ใบรับรอง",
                   type: "select",
                   options: documentOptions(docs),
                   required: true,
                 },
               ]}
-              submitLabel="ยืนยันใบรับรองตามหลักฐาน (จำลอง)"
+              submitLabel={
+                mode === "mock"
+                  ? "ยืนยันใบรับรองตามหลักฐาน (จำลอง)"
+                  : "ยืนยันใบรับรองตามหลักฐาน"
+              }
               onSave={(v) =>
                 mutate("confirmMedicalCertificate", {
                   healthCheckId: health.id,

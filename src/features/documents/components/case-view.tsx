@@ -199,8 +199,8 @@ function CasePreparation({ stage }: { stage: Stage }) {
         </Banner>
       )}
       <Banner>
-        Checklist DEMO-1 เป็นตัวอย่างตามกรณี
-        ไม่ใช่รายการเอกสารราชการที่ยืนยันแล้ว (O-03)
+        รายการเอกสารตามนโยบายที่กำหนดสำหรับคำขอนี้
+        กรุณาตรวจรายการของหน่วยงานผู้รับคำขอประกอบด้วย
       </Banner>
       <Panel title="ข้อมูลและเอกสารประกอบตามกรณี">
         {locked && (
@@ -272,7 +272,7 @@ function CasePreparation({ stage }: { stage: Stage }) {
   );
 }
 function ApplicationView({ stage }: { stage: Stage }) {
-  const { data, mutate } = useDemo();
+  const { data, mode, mutate } = useDemo();
   const a = stage.application;
   const docs = data.documents.filter(
     (d) => d.employmentId === stage.employmentId,
@@ -289,7 +289,7 @@ function ApplicationView({ stage }: { stage: Stage }) {
     <>
       <Banner>
         การยื่น พิจารณา และออกเอกสารเกิดภายนอก
-        ระบบนี้จำลองการบันทึกหลักฐานเท่านั้น
+        ระบบบันทึกข้อมูลตามหลักฐานจากหน่วยงาน
       </Banner>
       <Panel title="ข้อมูลการยื่นคำร้อง">
         <p>
@@ -444,7 +444,7 @@ function ApplicationView({ stage }: { stage: Stage }) {
             <>
               <Banner tone="warning">
                 ผลอนุมัติยังไม่เท่ากับมีเอกสารพร้อมรับ ต้องแนบเอกสารที่ออกจริง
-                (จำลอง)
+                {mode === "mock" && " (จำลอง)"}
               </Banner>
               <OperationForm
                 fields={[
@@ -468,13 +468,20 @@ function ApplicationView({ stage }: { stage: Stage }) {
                   },
                   {
                     name: "sourceDocument",
-                    label: "ไฟล์เอกสารที่ออกแล้ว (ตัวอย่าง)",
+                    label:
+                      mode === "mock"
+                        ? "ไฟล์เอกสารที่ออกแล้ว (ตัวอย่าง)"
+                        : "ไฟล์เอกสารที่ออกแล้ว",
                     type: "select",
                     options: documentOptions(docs),
                     required: true,
                   },
                 ]}
-                submitLabel="จัดเก็บเอกสารที่ออกแล้ว (จำลอง)"
+                submitLabel={
+                  mode === "mock"
+                    ? "จัดเก็บเอกสารที่ออกแล้ว (จำลอง)"
+                    : "จัดเก็บเอกสารที่ออกแล้ว"
+                }
                 onSave={(v) =>
                   mutate("attachIssuedDocument", {
                     applicationId: a.id,
