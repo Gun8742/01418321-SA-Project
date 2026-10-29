@@ -5,7 +5,7 @@
 ## สถานะ
 
 มี Frontend และ Backend ครอบคลุม flow UC-01–UC-11 ด้วย Next.js + React + TypeScript, PostgreSQL/Prisma, Better Auth และ S3 API
-ใช้บัญชีนายจ้างเดิมเพียงบัญชีเดียว ไม่มีหน้าสมัครนายจ้าง; เชิญลูกจ้างและ Password reset ผ่านอีเมลสำหรับทดลองในเครื่อง ใช้ Checklist INTERNAL-1 ที่ผู้ใช้ให้สมมติขึ้น; ไม่ใช่แบบราชการที่รับรอง ดู [คู่มือทดลองภายในองค์กร](docs/internal-trial.md) สำหรับบัญชี สิทธิ์ และ Server deployment
+ใช้บัญชีนายจ้างเดิมเพียงบัญชีเดียว ไม่มีหน้าสมัครนายจ้าง; สร้างบัญชีลูกจ้างด้วย Passport และรหัสผ่านสุ่มให้นายจ้างส่งเอง ไม่มีการส่งอีเมล ใช้ Checklist INTERNAL-1 ที่ผู้ใช้ให้สมมติขึ้น; ไม่ใช่แบบราชการที่รับรอง ดู [คู่มือทดลองภายในองค์กร](docs/internal-trial.md) สำหรับบัญชี สิทธิ์ และ Server deployment
 Dependencies/versions อยู่ใน package.json/lockfile; UI ใช้ CSS Tokens และ Noto Sans Thai ที่ self-host
 
 ## เริ่ม Backend ในเครื่อง
@@ -24,17 +24,17 @@ ALLOW_SYNTHETIC_POLICY=true npm run db:seed
 npm run dev
 ```
 
-เปิด http://127.0.0.1:3000/login ด้วยบัญชีนายจ้าง `employer` ที่เตรียมไว้ แล้วเพิ่มข้อมูลลูกจ้างและส่งคำเชิญจากเมนูเชิญลูกจ้าง เปิดอีเมลคำเชิญที่ Mailpit http://127.0.0.1:8025 เพื่อตั้งรหัสผ่านลูกจ้าง ไม่มีการสมัครนายจ้างผ่านเว็บ
+เปิด http://127.0.0.1:3000/login ด้วยบัญชีนายจ้าง `employer` ที่เตรียมไว้ แล้วเพิ่มข้อมูลลูกจ้าง ระบบสร้างบัญชีด้วยเลข Passport และรหัสผ่านสุ่ม แสดงรหัสครั้งเดียวให้นายจ้างคัดลอกส่งเอง ลูกจ้างเดิมสร้างบัญชีหรือ Generate รหัสใหม่ได้ที่เมนูบัญชีลูกจ้าง ไม่มีการสมัครนายจ้างผ่านเว็บและไม่ส่งอีเมล
 Backend ใช้ Server Session/DB และไฟล์จริง นายจ้างบันทึกผลภายนอกในองค์กรของตน ลูกจ้างดูผล วางแผนเดินทาง และยืนยันรับเอกสาร
 
-Compose local ผูก PostgreSQL 5447, S3Mock 9040 และ Mailpit 1025/8025 กับ loopback; ข้อมูลเก็บใน named volumes ยกเว้นอีเมล Mailpit Local S3Mock สำหรับทดสอบเท่านั้น ห้ามใช้เอกสารส่วนบุคคลจริง
-ชุดติดตั้ง Server แยกอยู่ใน `compose.server.yaml` ใช้ Private S3 และ SMTP ขององค์กรตาม [คู่มือ](docs/internal-trial.md)
+Compose local ผูก PostgreSQL 5447 และ S3Mock 9040 กับ loopback; ข้อมูลเก็บใน named volumes Local S3Mock สำหรับทดสอบเท่านั้น ห้ามใช้เอกสารส่วนบุคคลจริง
+ชุดติดตั้ง Server แยกอยู่ใน `compose.server.yaml` ใช้ Private S3 ขององค์กรตาม [คู่มือ](docs/internal-trial.md)
 
 Fixture เดิมยังใช้ได้เมื่อ opt-in `ALLOW_SYNTHETIC_POLICY=true` และรัน `npm run db:seed`; บัญชี `employer`, `arun`, `maya`, `lin`, `other_employer` ใช้ SEED_PASSWORD สำหรับเครื่องที่ยังไม่มีบัญชีทดสอบ ให้ provision ด้วย seed นี้ก่อน; `other_employer` เป็น fixture สำหรับทดสอบแยกสิทธิ์เท่านั้น
 
 ## ข้อมูลเมื่อเพื่อน Clone หรือ Pull
 
-Git ส่งเฉพาะ source code, migrations และ seed fixtures ข้อมูลที่เพิ่มผ่านหน้าเว็บ บัญชี/รหัสผ่านที่ตั้งเอง คำเชิญ อีเมลใน Mailpit และไฟล์อัปโหลดอยู่ใน Database/Storage ของแต่ละเครื่อง จึงไม่ตาม Push/Pull ไปด้วย `.env` และ secrets ไม่ได้เก็บใน Git
+Git ส่งเฉพาะ source code, migrations และ seed fixtures ข้อมูลที่เพิ่มผ่านหน้าเว็บ บัญชี/รหัสผ่านที่ตั้งเอง และไฟล์อัปโหลดอยู่ใน Database/Storage ของแต่ละเครื่อง จึงไม่ตาม Push/Pull ไปด้วย `.env` และ secrets ไม่ได้เก็บใน Git
 
 เครื่องใหม่ให้ทำขั้นตอนเริ่ม Backend ด้านบน ตั้ง secrets และ `SEED_PASSWORD` ของตัวเอง แล้วรัน migrations, bootstrap และ seed จะได้ข้อมูลทดสอบตั้งต้น ไม่ใช่สำเนาข้อมูลปัจจุบันของผู้พัฒนา หากต้องการเห็นข้อมูลชุดเดียวกันแบบต่อเนื่องต้องเชื่อม Backend/Database/Storage ชุดเดียวกัน หรือถ่ายโอนข้อมูลแยกจาก Git
 

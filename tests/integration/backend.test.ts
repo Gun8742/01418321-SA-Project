@@ -1,13 +1,19 @@
-import { beforeAll, afterAll, describe, it, expect, vi } from "vitest";
+import { z } from "zod";
+import { beforeAll, afterAll, describe, it, expect } from "vitest";
 import { seedLocal } from "../../prisma/seed";
 import { database } from "../../src/server/db";
 import {
   authentication,
   resolvePrincipal,
+  resolveLoginUsername,
   type Principal,
 } from "../../src/server/auth";
 import { tokenDigest } from "../../src/server/auth-db";
-import { executeCommand, snapshot } from "../../src/features/workforce/service";
+import {
+  executeCommand,
+  snapshot,
+  manageWorkerAccount,
+} from "../../src/features/workforce/service";
 import {
   initiateUpload,
   uploadBytes,
@@ -25,17 +31,6 @@ import { PDFDocument } from "pdf-lib";
 import { businessDate } from "../../src/lib/date";
 import { demoDataSchema } from "../../src/features/workforce/model";
 import { executeQuery } from "../../src/features/workforce/queries";
-const mail = vi.hoisted(() => ({
-  links: [] as { to: string; url: string }[],
-  fail: false,
-}));
-vi.mock("../../src/server/mail", () => ({
-  sendAccountMail: async (to: string, _subject: string, url: string) => {
-    if (mail.fail) throw new Error("SMTP down");
-    mail.links.push({ to, url });
-  },
-}));
-import { inviteWorker, activateAccount } from "../../src/server/enrollment";
 const db = database();
 let employer: Principal;
 let arun: Principal;
@@ -571,10 +566,31 @@ describe("Boundary and persistence regressions", () => {
       input,
       requestId,
     );
+    const credentials = z
+      .object({
+        credentials: z.object({ username: z.string(), password: z.string() }),
+      })
+      .parse(first.data).credentials;
+    expect(credentials.username).toBe("SYNTHETIC-NEW");
+    const account = await db.user.findUniqueOrThrow({
+      where: { username: "synthetic-new" },
+      include: { accounts: true, actor: true },
+    });
+    expect(account.accounts[0].password).not.toBe(credentials.password);
+    expect(account.actor?.role).toBe("WORKER");
+    const replay = await command(
+      employer,
+      "saveWorkerEmployment",
+      input,
+      requestId,
+    );
+    expect(replay.data.id).toBe(first.data.id);
+    expect("credentials" in replay.data).toBe(false);
     expect(
-      (await command(employer, "saveWorkerEmployment", input, requestId)).data
-        .id,
-    ).toBe(first.data.id);
+      (await db.operationReceipt.findFirstOrThrow({ where: { requestId } }))
+        .digest,
+    ).not.toContain(credentials.password);
+
     await expect(
       command(
         employer,
@@ -808,29 +824,10 @@ describe("PR4 review regressions", () => {
   });
 });
 
-describe("verified organization enrollment", () => {
-  const password = "Synthetic-Only-Password-321";
-  async function unregisteredWorker(id: bigint) {
-    const profile = await db.worker.findUniqueOrThrow({ where: { id: 103n } });
-    const employment = await db.employment.findFirstOrThrow({
-      where: { workerId: 103n },
-    });
-    await db.worker.create({
-      data: { ...profile, id, passportNo: "INVITE-" + id },
-    });
-    await db.employment.create({
-      data: { ...employment, id: id + 1n, workerId: id },
-    });
-    return id.toString();
-  }
-  function token(email: string) {
-    return new URL(
-      mail.links.findLast((m) => m.to === email)!.url,
-    ).searchParams.get("token")!;
-  }
-  async function emailLogin(email: string, secret = password) {
-    const response = await authentication().api.signInEmail({
-      body: { email, password: secret },
+describe("manual worker accounts", () => {
+  async function passportLogin(username: string, password: string) {
+    const response = await authentication().api.signInUsername({
+      body: { username, password },
       headers: new Headers({ origin: process.env.BETTER_AUTH_URL ?? "" }),
       asResponse: true,
     });
@@ -842,113 +839,33 @@ describe("verified organization enrollment", () => {
         .join("; "),
     });
   }
-  it("rejects legacy employer activation links without creating another employer", async () => {
-    const token = "a".repeat(64);
-    const { createHash } = await import("node:crypto");
-    const count = await db.employer.count();
-    await db.enrollment.create({
-      data: {
-        id: crypto.randomUUID(),
-        digest: createHash("sha256").update(token).digest("hex"),
-        email: "legacy-employer@example.test",
-        name: "Legacy",
-        company: { name: "Legacy" },
-        expiresAt: new Date(Date.now() + 60000),
-      },
-    });
-    await expect(activateAccount({ token, password })).rejects.toMatchObject({
-      code: "PRECONDITION_FAILED",
-    });
-    expect(await db.employer.count()).toBe(count);
-    expect(
-      await db.user.findUnique({
-        where: { email: "legacy-employer@example.test" },
-      }),
-    ).toBeNull();
-  });
-  it("consumes worker invitations once, rejects expiry, and revokes unsent links", async () => {
-    const workerId = await unregisteredWorker(910020n);
-    const email = "one-use-worker@example.test";
-    await inviteWorker(employer, { workerId, email });
-    expect(await db.user.findUnique({ where: { email } })).toBeNull();
-    const activation = token(email);
-    const row = await db.enrollment.findFirstOrThrow({
-      where: { email, consumedAt: null },
-    });
-    expect(row.digest).not.toBe(activation);
-    const results = await Promise.allSettled([
-      activateAccount({ token: activation, password }),
-      activateAccount({ token: activation, password }),
-    ]);
-    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    await expect(
-      activateAccount({ token: activation, password }),
-    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-    const pendingWorker = await unregisteredWorker(910030n);
-    const expiredEmail = "expired@example.test";
-    await inviteWorker(employer, {
-      workerId: pendingWorker,
-      email: expiredEmail,
-    });
-    await db.enrollment.updateMany({
-      where: { email: expiredEmail },
-      data: { expiresAt: new Date(0) },
-    });
-    await expect(
-      activateAccount({ token: token(expiredEmail), password }),
-    ).rejects.toMatchObject({ code: "PRECONDITION_FAILED" });
-    mail.fail = true;
-    try {
-      await expect(
-        inviteWorker(employer, {
-          workerId: pendingWorker,
-          email: "smtp-failure@example.test",
-        }),
-      ).rejects.toThrow("SMTP down");
-    } finally {
-      mail.fail = false;
-    }
-    expect(
-      await db.enrollment.count({
-        where: { email: "smtp-failure@example.test", consumedAt: null },
-      }),
-    ).toBe(0);
-  });
-  it("scopes worker invitations, rechecks inviter rights, and links the existing worker", async () => {
-    await expect(
-      inviteWorker(other, { workerId: "101", email: "intruder@example.test" }),
-    ).rejects.toMatchObject({ code: "NOT_FOUND" });
-    await expect(
-      inviteWorker(arun, { workerId: "101", email: "intruder@example.test" }),
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  it("creates legacy worker accounts, prevents duplicates, scopes credentials and revokes sessions on reset", async () => {
     const profile = await db.worker.findUniqueOrThrow({ where: { id: 103n } });
     const employment = await db.employment.findFirstOrThrow({
       where: { workerId: 103n },
     });
     await db.worker.create({
-      data: { ...profile, id: 910001n, passportNo: "INVITE-TEST-ONLY" },
+      data: { ...profile, id: 910001n, passportNo: "MANUAL-TEST-ONLY" },
     });
     await db.employment.create({
       data: { ...employment, id: 910002n, workerId: 910001n },
     });
-    const email = "invited-worker@example.test";
-    await inviteWorker(employer, { workerId: "910001", email });
-    await db.actorAccount.update({
-      where: { id: BigInt(employer.actor.accountId) },
-      data: { active: false },
+    await expect(
+      manageWorkerAccount(other, { workerId: "910001" }),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(
+      manageWorkerAccount(arun, { workerId: "910001" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const credentials = await manageWorkerAccount(employer, {
+      workerId: "910001",
     });
-    try {
-      await expect(
-        activateAccount({ token: token(email), password }),
-      ).rejects.toMatchObject({ code: "CONFLICT" });
-    } finally {
-      await db.actorAccount.update({
-        where: { id: BigInt(employer.actor.accountId) },
-        data: { active: true },
-      });
-    }
-    await activateAccount({ token: token(email), password });
-    const principal = await resolvePrincipal(await emailLogin(email));
+    expect(credentials.username).toBe("MANUAL-TEST-ONLY");
+    expect(credentials.password.length).toBeGreaterThanOrEqual(24);
+    const headers = await passportLogin(
+      credentials.username,
+      credentials.password,
+    );
+    const principal = await resolvePrincipal(headers);
     expect(principal.actor).toMatchObject({
       role: "WORKER",
       workerId: "910001",
@@ -956,32 +873,97 @@ describe("verified organization enrollment", () => {
     expect((await snapshot(principal)).data.workers.map((w) => w.id)).toEqual([
       "910001",
     ]);
+    const stored = await db.account.findFirstOrThrow({
+      where: { userId: principal.userId },
+    });
+    expect(stored.password).not.toBe(credentials.password);
     await expect(
-      inviteWorker(employer, {
-        workerId: "910001",
-        email: "duplicate@example.test",
-      }),
+      manageWorkerAccount(employer, { workerId: "910001" }),
     ).rejects.toMatchObject({ code: "CONFLICT" });
-  });
-  it("resets passwords through native auth and revokes existing sessions", async () => {
-    const email = "invited-worker@example.test";
-    const headers = await emailLogin(email);
-    await authentication().api.requestPasswordReset({
-      body: { email, redirectTo: "/reset-password" },
-      headers: new Headers({ origin: process.env.BETTER_AUTH_URL ?? "" }),
-    });
-    const url = new URL(mail.links.findLast((m) => m.to === email)!.url);
-    const resetToken = url.pathname.split("/").at(-1)!;
-    await authentication().api.resetPassword({
-      body: { token: resetToken, newPassword: password + "-changed" },
-    });
+    const next = await manageWorkerAccount(
+      employer,
+      { workerId: "910001" },
+      true,
+    );
+    expect(next.password).not.toBe(credentials.password);
     await expect(resolvePrincipal(headers)).rejects.toMatchObject({
       code: "UNAUTHENTICATED",
     });
+    const rejected = await authentication().api.signInUsername({
+      body: { username: credentials.username, password: credentials.password },
+      asResponse: true,
+    });
+    expect(rejected.ok).toBe(false);
     expect(
-      (await resolvePrincipal(await emailLogin(email, password + "-changed")))
-        .actor.role,
+      (
+        await resolvePrincipal(
+          await passportLogin(next.username, next.password),
+        )
+      ).actor.role,
     ).toBe("WORKER");
+  });
+  it("supports Passport login for legacy accounts without changing their password", async () => {
+    const worker = await db.worker.findUniqueOrThrow({ where: { id: 103n } });
+    const account = await db.actorAccount.findFirstOrThrow({
+      where: { workerId: worker.id },
+      include: { user: true },
+    });
+    expect(await resolveLoginUsername(worker.passportNo.toLowerCase())).toBe(
+      account.user.username,
+    );
+  });
+  it("rolls back Passport collisions and keeps an edited Passport synchronized with Login", async () => {
+    const state = (await snapshot(employer)).data;
+    const worker = state.workers.find(
+      (w) => w.passportNo === "MANUAL-TEST-ONLY",
+    )!;
+    const employment = state.employments.find((e) => e.workerId === worker.id)!;
+    const { id: wid, version: wv, ...profile } = worker;
+    const {
+      id: eid,
+      version: ev,
+      employerId,
+      workerId,
+      ...fields
+    } = employment;
+    const input = {
+      workerId: wid,
+      employmentId: eid,
+      expectedEmployerVersion: state.employer?.version,
+      expectedVersions: { worker: wv, employment: ev },
+      profile: { ...profile, passportNo: "employer" },
+      employment: fields,
+    };
+    await expect(
+      command(employer, "saveWorkerEmployment", input),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(
+      (await db.worker.findUniqueOrThrow({ where: { id: BigInt(wid) } }))
+        .passportNo,
+    ).toBe(worker.passportNo);
+    const account = await db.actorAccount.findFirstOrThrow({
+      where: { workerId: BigInt(wid) },
+    });
+    const oldHash = (
+      await db.account.findFirstOrThrow({
+        where: { userId: account.userId, providerId: "credential" },
+      })
+    ).password;
+    await command(employer, "saveWorkerEmployment", {
+      ...input,
+      profile: { ...profile, passportNo: "UPDATED-PASSPORT" },
+    });
+    expect(
+      (await db.user.findUniqueOrThrow({ where: { id: account.userId } }))
+        .username,
+    ).toBe("updated-passport");
+    expect(
+      (
+        await db.account.findFirstOrThrow({
+          where: { userId: account.userId, providerId: "credential" },
+        })
+      ).password,
+    ).toBe(oldHash);
   });
   it("applies employer evidence policy only inside the organization", async () => {
     process.env.EXTERNAL_RESULTS_BY_EMPLOYER = "true";

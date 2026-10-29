@@ -271,7 +271,7 @@ export function AppFrame({
         </nav>
         {area === "EMPLOYER" && demo.mode === "backend" && (
           <Link className="nav-link" href="/employer/accounts">
-            เชิญลูกจ้าง
+            บัญชีลูกจ้าง
           </Link>
         )}
         {area === "EMPLOYER" && demo.mode === "backend" && (

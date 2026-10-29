@@ -1,141 +1,73 @@
 "use client";
-import Link from "next/link";
-import { z } from "zod";
 import { useState } from "react";
-import {
-  Banner,
-  OperationForm,
-  type FieldSpec,
-} from "@/components/ui/primitives";
+import { z } from "zod";
+import { Banner, OperationForm } from "@/components/ui/primitives";
 import { useDemo } from "@/features/demo/context";
 import type { OperationResult } from "@/features/workforce/model";
-
-type FormKind = "activate" | "forgot" | "reset" | "invite";
-export function AccountForm({
-  kind,
-  token = "",
-}: {
-  kind: FormKind;
-  token?: string;
-}) {
+import { WorkerCredentials } from "./credentials";
+const responseSchema = z.object({
+  credentials: z.object({ username: z.string(), password: z.string() }),
+});
+export function WorkerAccounts() {
   const { data, mode } = useDemo();
-  const [done, setDone] = useState(false);
+  const [credentials, setCredentials] = useState<
+    z.infer<typeof responseSchema>["credentials"] | null
+  >(null);
   const [saving, setSaving] = useState(false);
-  const titles = {
-    activate: "ยืนยันอีเมลและตั้งรหัสผ่าน",
-    forgot: "ขอลิงก์ตั้งรหัสผ่านใหม่",
-    reset: "ตั้งรหัสผ่านใหม่",
-    invite: "เชิญลูกจ้างเข้าระบบ",
-  };
-  const fields: FieldSpec[] =
-    kind === "invite"
-      ? [
-          {
-            name: "workerId",
-            label: "ลูกจ้าง",
-            type: "select",
-            required: true,
-            options: data.workers.map((w) => ({
-              value: w.id,
-              label: w.name,
-            })),
-          },
-          {
-            name: "email",
-            label: "อีเมลของลูกจ้าง",
-            type: "email",
-            required: true,
-          },
-        ]
-      : kind === "forgot"
-        ? [{ name: "email", label: "อีเมล", type: "email", required: true }]
-        : [
-            {
-              name: "password",
-              label: "รหัสผ่านใหม่อย่างน้อย 12 ตัวอักษร",
-              type: "password",
-              required: true,
-            },
-            {
-              name: "confirmation",
-              label: "ยืนยันรหัสผ่านใหม่",
-              type: "password",
-              required: true,
-            },
-          ];
   async function submit(
     values: Record<string, string>,
   ): Promise<OperationResult> {
     const requestId = crypto.randomUUID();
     if (
-      (kind === "activate" || kind === "reset") &&
-      (values.password !== values.confirmation || values.password.length < 12)
+      values.action === "reset" &&
+      !window.confirm(
+        "Generate รหัสใหม่จะยกเลิกรหัสเดิมและออกจากระบบทุกอุปกรณ์ของลูกจ้าง ยืนยันดำเนินการ?",
+      )
     )
       return {
         ok: false,
         requestId,
         error: {
-          code: "VALIDATION_ERROR",
-          message: "รหัสผ่านต้องตรงกันและยาวอย่างน้อย 12 ตัวอักษร",
+          code: "CANCELLED",
+          message: "ยกเลิกการ Generate รหัสใหม่แล้ว",
           retryable: false,
-          fieldErrors: { confirmation: ["กรุณาตรวจรหัสผ่านทั้งสองช่อง"] },
         },
       };
-    const path =
-      kind === "forgot"
-        ? "/api/auth/request-password-reset"
-        : kind === "reset"
-          ? "/api/auth/reset-password"
-          : "/api/accounts/" + kind;
-    const body =
-      kind === "forgot"
-        ? { email: values.email, redirectTo: "/reset-password" }
-        : kind === "reset"
-          ? { token, newPassword: values.password }
-          : kind === "activate"
-            ? { token, password: values.password }
-            : values;
     setSaving(true);
     try {
-      const response = await fetch(path, {
+      const response = await fetch("/api/accounts/" + values.action, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
         credentials: "same-origin",
+        body: JSON.stringify({ workerId: values.workerId }),
       });
+      const raw: unknown = await response.json();
       if (!response.ok) {
         const result = z
-          .object({
-            ok: z.literal(false),
-            requestId: z.string(),
-            error: z.object({
-              code: z.string(),
-              message: z.string(),
-              fieldErrors: z.record(z.string(), z.array(z.string())).optional(),
-              retryable: z.boolean(),
-            }),
-          })
-          .safeParse(await response.json());
-        if (result.success) return result.data;
+          .object({ error: z.object({ message: z.string() }) })
+          .safeParse(raw);
         return {
           ok: false,
           requestId,
           error: {
             code: "SAVE_FAILED",
-            message: "ดำเนินการไม่สำเร็จ กรุณาตรวจข้อมูลหรือลิงก์ แล้วลองใหม่",
+            message: result.success
+              ? result.data.error.message
+              : "ดำเนินการไม่สำเร็จ กรุณาตรวจข้อมูลแล้วลองใหม่",
             retryable: true,
           },
         };
       }
-      setDone(true);
-      return { ok: true, requestId, data: { id: "account" } };
+      setCredentials(responseSchema.parse(raw).credentials);
+      return { ok: true, requestId, data: { id: values.workerId } };
     } catch {
       return {
         ok: false,
         requestId,
         error: {
           code: "SAVE_FAILED",
-          message: "ติดต่อระบบไม่ได้ กรุณาลองใหม่",
+          message:
+            "ไม่สามารถยืนยันผลได้ กรุณาตรวจบัญชี หากรหัสสูญหายให้ Generate รหัสใหม่",
           retryable: true,
         },
       };
@@ -145,26 +77,60 @@ export function AccountForm({
   }
   return (
     <section className="panel stack">
-      <h1>{titles[kind]}</h1>
+      <h1>บัญชีลูกจ้าง</h1>
       {mode !== "backend" ? (
-        <Banner>หน้านี้ใช้กับระบบ Backend กรุณาเปิด Backend mode</Banner>
-      ) : done ? (
-        <Banner>
-          {kind === "activate" || kind === "reset"
-            ? "ตั้งค่าบัญชีสำเร็จ สามารถเข้าสู่ระบบด้วยอีเมลและรหัสผ่านใหม่"
-            : "ส่งคำขอแล้ว หากอีเมลนี้สามารถใช้งานได้ ระบบจะส่งลิงก์ให้ กรุณาตรวจกล่องจดหมาย"}
-        </Banner>
-      ) : (
-        <OperationForm
-          disabled={saving}
-          fields={fields}
-          submitLabel={
-            kind === "activate" || kind === "reset" ? "ตั้งรหัสผ่าน" : "ส่งคำขอ"
-          }
-          onSave={submit}
+        <Banner>หน้านี้ใช้กับระบบ Backend</Banner>
+      ) : credentials ? (
+        <WorkerCredentials
+          credentials={credentials}
+          onClose={() => setCredentials(null)}
         />
+      ) : (
+        <>
+          <p>
+            เมื่อเพิ่มลูกจ้างใหม่ ระบบจะสร้างบัญชีให้อัตโนมัติ
+            ใช้หน้านี้สำหรับลูกจ้างเดิมที่ยังไม่มีบัญชี หรือ Generate
+            รหัสผ่านใหม่ให้นายจ้างส่งต่อเอง
+          </p>
+          <Banner>
+            การ Generate รหัสใหม่จะยกเลิกรหัสเดิมและ Session
+            ของลูกจ้างทุกอุปกรณ์
+          </Banner>
+          <OperationForm
+            disabled={saving}
+            fields={[
+              {
+                name: "workerId",
+                label: "ลูกจ้าง",
+                type: "select",
+                required: true,
+                options: data.workers.map((w) => ({
+                  value: w.id,
+                  label: w.name + " · " + w.passportNo,
+                })),
+              },
+              {
+                name: "action",
+                label: "การดำเนินการ",
+                type: "select",
+                required: true,
+                options: [
+                  {
+                    value: "create",
+                    label: "สร้างบัญชีสำหรับลูกจ้างที่ยังไม่มีบัญชี",
+                  },
+                  {
+                    value: "reset",
+                    label: "Generate รหัสผ่านใหม่ / เปลี่ยนมาใช้ Passport",
+                  },
+                ],
+              },
+            ]}
+            onSave={submit}
+            submitLabel="สร้างข้อมูลสำหรับ Login"
+          />
+        </>
       )}
-      <Link href="/login">เข้าสู่ระบบ</Link>
     </section>
   );
 }

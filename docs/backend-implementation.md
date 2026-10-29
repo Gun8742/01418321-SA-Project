@@ -1,6 +1,6 @@
 # Backend implementation
 
-อัปเดต 29 ตุลาคม 2569: รุ่นทดลองภายในเพิ่ม email enrollment, worker invitations, password reset, INTERNAL-1 และสิทธิ์นายจ้างบันทึกผล อ่าน [คู่มือปัจจุบัน](internal-trial.md) ก่อนใช้ค่าเริ่มต้น/คำสั่งของรุ่น local เดิมด้านล่าง
+อัปเดต 29 ตุลาคม 2569: รุ่นทดลองภายในเพิ่ม Passport Login และรหัสผ่านสุ่มที่นายจ้างส่งเอง (แทน email enrollment/invitations/reset), INTERNAL-1 และสิทธิ์นายจ้างบันทึกผล อ่าน [คู่มือปัจจุบัน](internal-trial.md) ก่อนใช้ค่าเริ่มต้น/คำสั่งของรุ่น local เดิมด้านล่าง
 
 Backend ใช้ Next.js Route Handlers, PostgreSQL 17/Prisma 7, Better Auth และ S3 API ภายในแอปเดียวกับ Frontend เปิดด้วย `BACKEND_ENABLED=true` และ `NEXT_PUBLIC_ENABLE_MOCK=false` พร้อมกัน; flag ขัดกันจะปิดการทำงาน
 

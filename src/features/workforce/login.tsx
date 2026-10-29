@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDemo } from "../demo/context";
@@ -75,7 +74,7 @@ export function BackendLogin() {
       <section className="login-form stack">
         <h1>เข้าสู่ระบบ</h1>
         <Banner>
-          ใช้ชื่อบัญชีหรืออีเมลที่ยืนยันแล้ว ·
+          ลูกจ้างใช้เลข Passport และรหัสผ่านที่นายจ้างมอบให้ ·
           การยื่นและการพิจารณาเกิดภายนอกระบบ
         </Banner>
         <OperationForm
@@ -93,7 +92,9 @@ export function BackendLogin() {
           submitLabel={saving ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
           onSave={signIn}
         />
-        <Link href="/forgot-password">ลืมรหัสผ่าน</Link>
+        <p className="muted small">
+          ลูกจ้างลืมรหัสผ่าน: ติดต่อนายจ้างเพื่อ Generate รหัสผ่านใหม่
+        </p>
       </section>
     </main>
   );

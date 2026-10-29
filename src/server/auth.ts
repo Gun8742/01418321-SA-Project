@@ -1,5 +1,4 @@
 import "server-only";
-import { sendAccountMail } from "./mail";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { username } from "better-auth/plugins";
@@ -26,12 +25,14 @@ export function createAuthentication(provisioning = false) {
       disableSignUp: !provisioning,
       minPasswordLength: 12,
       maxPasswordLength: 128,
-      revokeSessionsOnPasswordReset: true,
-      sendResetPassword: async ({ user, url }) => {
-        await sendAccountMail(user.email, "ตั้งรหัสผ่านใหม่", url);
-      },
     },
-    plugins: [username()],
+    plugins: [
+      username({
+        minUsernameLength: 1,
+        maxUsernameLength: 100,
+        usernameValidator: (value) => /^[a-zA-Z0-9_-]+$/.test(value),
+      }),
+    ],
     session: {
       expiresIn: 60 * 60 * 8,
       updateAge: 60 * 15,
@@ -43,8 +44,6 @@ export function createAuthentication(provisioning = false) {
       window: 15 * 60,
       max: 50,
       customRules: {
-        "/request-password-reset": { window: 15 * 60, max: 3 },
-        "/reset-password": { window: 15 * 60, max: 5 },
         "/sign-in/email": { window: 15 * 60, max: 5 },
         "/sign-in/username": { window: 15 * 60, max: 5 },
       },
@@ -123,4 +122,22 @@ export async function assertActivePrincipal(
       : row.workerId?.toString() !== principal.actor.workerId)
   )
     throw new OperationError("FORBIDDEN", "สิทธิ์บัญชีเปลี่ยนแล้ว");
+}
+
+export async function resolveLoginUsername(input: string) {
+  const value = input.trim().toLowerCase();
+  const accounts = await database().actorAccount.findMany({
+    where: {
+      role: "WORKER",
+      worker: { passportNo: { equals: value, mode: "insensitive" } },
+    },
+    include: { user: true },
+    take: 2,
+  });
+  if (accounts.length > 1)
+    throw new OperationError(
+      "UNAUTHENTICATED",
+      "ชื่อบัญชีหรือรหัสผ่านไม่ถูกต้อง",
+    );
+  return accounts[0]?.user.username ?? value;
 }

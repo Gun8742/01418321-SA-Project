@@ -40,7 +40,12 @@ export type Actor = z.infer<typeof actorSchema>;
 export const profileSchema = z.strictObject({
   name: requiredText,
   nationality: requiredText,
-  passportNo: requiredText,
+  passportNo: z
+    .string()
+    .trim()
+    .min(1, "กรุณาระบุเลข Passport")
+    .max(100)
+    .regex(/^[A-Za-z0-9_-]+$/, "ใช้ตัวอักษรอังกฤษ ตัวเลข - หรือ _"),
   birthDate: dateSchema,
   passportCountry: requiredText,
   passportIssuedAt: dateSchema,
@@ -242,7 +247,14 @@ export type OperationName =
   | "resolveCorrection"
   | "addSupportingDocument";
 export type OperationResult =
-  | { ok: true; data: { id: string }; requestId: string }
+  | {
+      ok: true;
+      data: {
+        id: string;
+        credentials?: { username: string; password: string };
+      };
+      requestId: string;
+    }
   | {
       ok: false;
       error: {

@@ -12,6 +12,7 @@ import {
   type Worker,
 } from "@/features/demo/model";
 import {
+  Banner,
   Badge,
   DocumentLibrary,
   Empty,
@@ -22,6 +23,7 @@ import {
   type FieldSpec,
   type FormValues,
 } from "@/components/ui/primitives";
+import { WorkerCredentials } from "@/features/accounts/credentials";
 import { CorrectionPanel } from "@/features/documents/components/corrections";
 
 const profileFields: [string, string, FieldSpec["type"]][] = [
@@ -72,8 +74,13 @@ function WorkerEditor({
   worker?: Worker;
   employment?: Employment;
 }) {
-  const { mutate, data } = useDemo();
+  const { mutate, data, mode } = useDemo();
   const [company] = useState(data.employer);
+  const [credentials, setCredentials] = useState<{
+    username: string;
+    password: string;
+  } | null>(null);
+  const [savedWithoutCredentials, setSavedWithoutCredentials] = useState(false);
   const router = useRouter();
   const w = fieldValues(worker),
     e = { ...fieldValues(company), ...fieldValues(employment) };
@@ -104,7 +111,7 @@ function WorkerEditor({
     })),
   ];
   async function save(values: FormValues) {
-    return mutate("saveWorkerEmployment", {
+    const result = await mutate("saveWorkerEmployment", {
       ...(company ? { expectedEmployerVersion: company.version } : {}),
       ...(worker && employment
         ? {
@@ -119,7 +126,31 @@ function WorkerEditor({
       profile: selectValues(values, profileFields),
       employment: selectValues(values, employmentFields),
     });
+    if (result.ok && result.data.credentials)
+      setCredentials(result.data.credentials);
+    else if (result.ok && !worker && mode === "backend")
+      setSavedWithoutCredentials(true);
+    return result;
   }
+  if (savedWithoutCredentials)
+    return (
+      <Panel title="บันทึกข้อมูลลูกจ้างแล้ว">
+        <Banner>
+          รายการนี้บันทึกสำเร็จแล้ว ระบบไม่แสดงรหัสเดิมซ้ำ หากไม่ได้รับรหัส
+          กรุณา Generate รหัสใหม่ที่หน้าบัญชีลูกจ้าง
+        </Banner>
+        <Link href="/employer/accounts">ไปบัญชีลูกจ้าง</Link>
+      </Panel>
+    );
+  if (credentials)
+    return (
+      <Panel title="สร้างข้อมูลลูกจ้างและบัญชีสำเร็จ">
+        <WorkerCredentials
+          credentials={credentials}
+          onClose={() => router.push("/employer/workers")}
+        />
+      </Panel>
+    );
   return (
     <Panel
       title={
@@ -131,13 +162,14 @@ function WorkerEditor({
       <OperationForm
         fields={fields}
         onSave={save}
-        onSuccess={(id) =>
+        onSuccess={(id) => {
+          if (!worker && mode === "backend") return;
           router.push(
             worker
               ? "/employer/workers/" + worker.id + "/employments/" + id
               : "/employer/workers",
-          )
-        }
+          );
+        }}
         submitLabel="บันทึกข้อมูลลูกจ้างและการจ้าง"
       />
     </Panel>

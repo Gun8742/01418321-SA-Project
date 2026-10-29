@@ -1,4 +1,4 @@
-import { AccountForm } from "@/features/accounts/account-forms";
-export default function Accounts() {
-  return <AccountForm kind="invite" />;
+import { WorkerAccounts } from "@/features/accounts/account-forms";
+export default function AccountsPage() {
+  return <WorkerAccounts />;
 }

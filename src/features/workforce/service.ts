@@ -1,4 +1,8 @@
 import {
+  generateWorkerCredentials,
+  syncWorkerUsername,
+} from "../../server/worker-accounts";
+import {
   activeChecklistVersion,
   employerRecordsResults,
 } from "../../server/policy";
@@ -392,6 +396,20 @@ export async function executeCommand(principal: Principal, raw: unknown) {
       operation,
       sourceFileId,
     );
+    let credentials: { username: string; password: string } | undefined;
+    if (operation === "saveWorkerEmployment") {
+      const employment = after.employments.find((e) => e.id === id)!;
+      const worker = after.workers.find((w) => w.id === employment.workerId)!;
+      if (!before.workers.some((w) => w.id === worker.id)) {
+        credentials = await generateWorkerCredentials(
+          tx,
+          BigInt(worker.id),
+          BigInt(after.nextId),
+        );
+      } else {
+        await syncWorkerUsername(tx, BigInt(worker.id), worker.passportNo);
+      }
+    }
     await tx.operationReceipt.create({
       data: {
         actorId: BigInt(principal.actor.accountId),
@@ -402,7 +420,11 @@ export async function executeCommand(principal: Principal, raw: unknown) {
         employmentId: BigInt(resultScope),
       },
     });
-    return { ok: true, data: { id }, requestId };
+    return {
+      ok: true,
+      data: { id, ...(credentials ? { credentials } : {}) },
+      requestId,
+    };
   });
 }
 export async function snapshot(principal: Principal) {
@@ -443,5 +465,42 @@ export async function snapshot(principal: Principal) {
         capability: g.capability,
       })),
     };
+  });
+}
+
+export async function manageWorkerAccount(
+  principal: Principal,
+  raw: unknown,
+  reset = false,
+) {
+  const { workerId } = z.strictObject({ workerId: idSchema }).parse(raw);
+  return transaction(async (tx) => {
+    await assertActivePrincipal(tx, principal);
+    if (principal.actor.role !== "EMPLOYER")
+      throw new OperationError("FORBIDDEN", "เฉพาะนายจ้าง");
+    const employment = await tx.employment.findFirst({
+      where: {
+        workerId: BigInt(workerId),
+        employerId: BigInt(principal.actor.employerId),
+      },
+    });
+    if (!employment)
+      throw new OperationError("NOT_FOUND", "ไม่พบลูกจ้างในองค์กร");
+    if (
+      reset &&
+      !(await tx.actorAccount.findFirst({
+        where: { workerId: BigInt(workerId) },
+      }))
+    )
+      throw new OperationError(
+        "PRECONDITION_FAILED",
+        "ลูกจ้างยังไม่มีบัญชี กรุณาเลือกสร้างบัญชี",
+      );
+    return generateWorkerCredentials(
+      tx,
+      BigInt(workerId),
+      BigInt(await allocateIds(tx)),
+      reset,
+    );
   });
 }

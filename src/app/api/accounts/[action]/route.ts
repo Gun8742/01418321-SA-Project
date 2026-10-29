@@ -1,23 +1,23 @@
 import { resolvePrincipal } from "@/server/auth";
-import { inviteWorker, activateAccount } from "@/server/enrollment";
+import { manageWorkerAccount } from "@/features/workforce/service";
 import { failure, readJson, requireSameOrigin } from "@/server/http";
-import { requireBackend } from "@/server/config";
 export async function POST(
   request: Request,
   context: { params: Promise<{ action: string }> },
 ) {
   try {
-    requireBackend();
-    requireSameOrigin(request);
     const { action } = await context.params;
-    const body = await readJson(request);
-    if (action === "invite")
-      await inviteWorker(await resolvePrincipal(request.headers), body);
-    else if (action === "activate") await activateAccount(body);
-    else return new Response(null, { status: 404 });
+    if (action !== "create" && action !== "reset")
+      return new Response(null, { status: 404 });
+    requireSameOrigin(request);
+    const credentials = await manageWorkerAccount(
+      await resolvePrincipal(request.headers),
+      await readJson(request),
+      action === "reset",
+    );
     return Response.json(
-      { ok: true },
-      { headers: { "Cache-Control": "no-store" } },
+      { ok: true, credentials },
+      { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
     return failure(error);

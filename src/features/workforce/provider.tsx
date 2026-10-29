@@ -14,7 +14,12 @@ import { emptyData } from "./empty";
 const resultSchema = z.discriminatedUnion("ok", [
   z.object({
     ok: z.literal(true),
-    data: z.object({ id: z.string() }),
+    data: z.object({
+      id: z.string(),
+      credentials: z
+        .object({ username: z.string(), password: z.string() })
+        .optional(),
+    }),
     requestId: z.string(),
   }),
   z.object({
