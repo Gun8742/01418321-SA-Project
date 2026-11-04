@@ -1,5 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { APIError } from "better-auth/api";
 import { database } from "./db";
 import type { Prisma } from "../generated/prisma/client";
 
@@ -36,18 +37,47 @@ function hashWhere(
       : {}),
   };
 }
+async function createAuthorizedSession(args: Prisma.SessionCreateArgs) {
+  const token = args.data.token;
+  return database().$transaction(async (tx) => {
+    // Lock eligibility until the session and login timestamp commit together.
+    const [account] = await tx.$queryRaw<{ id: bigint }[]>`
+      SELECT aa.id
+      FROM actor_account aa
+      JOIN login_service ls ON ls.id = aa."serviceId"
+      WHERE aa."userId" = ${args.data.userId}
+        AND aa.active AND ls.active
+        AND (
+          (aa.role = 'WORKER' AND aa."workerId" IS NOT NULL AND aa."employerId" IS NULL)
+          OR (aa.role IN ('EMPLOYER', 'REPRESENTATIVE')
+              AND aa."employerId" IS NOT NULL AND aa."workerId" IS NULL)
+        )
+      FOR UPDATE OF aa FOR SHARE OF ls
+    `;
+    if (!account)
+      throw new APIError("UNAUTHORIZED", {
+        message: "ชื่อบัญชีหรือรหัสผ่านไม่ถูกต้อง",
+      });
+    const row = await tx.session.create({
+      ...args,
+      data: { ...args.data, token: tokenDigest(token) },
+    });
+    await tx.$executeRaw`
+      UPDATE actor_account
+      SET last_login_at = GREATEST(last_login_at, ${row.createdAt}::timestamp)
+      WHERE id = ${account.id}
+    `;
+    return { ...row, token };
+  });
+}
+
 // Native auth sees the original bearer; PostgreSQL stores only its SHA-256 digest.
 export function authenticationDatabase() {
   return database().$extends({
     query: {
       session: {
-        async create({ args, query }) {
-          const token = args.data.token;
-          const row = await query({
-            ...args,
-            data: { ...args.data, token: tokenDigest(token) },
-          });
-          return { ...row, token };
+        create({ args }) {
+          return createAuthorizedSession(args);
         },
         async findFirst({ args, query }) {
           const token = rawToken(args.where);

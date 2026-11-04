@@ -23,6 +23,7 @@ export function createAuthentication(provisioning = false) {
     emailAndPassword: {
       enabled: true,
       disableSignUp: !provisioning,
+      autoSignIn: false,
       minPasswordLength: 12,
       maxPasswordLength: 128,
     },

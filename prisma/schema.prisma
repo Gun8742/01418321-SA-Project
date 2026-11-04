@@ -156,6 +156,7 @@ model ActorAccount {
   user       User                @relation(fields: [userId], references: [id], onDelete: Restrict)
   employer   Employer?           @relation(fields: [employerId], references: [id], onDelete: Restrict)
   worker     Worker?             @relation(fields: [workerId], references: [id], onDelete: Restrict)
+  lastLoginAt DateTime?          @map("last_login_at")
   service    LoginService        @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   grants     CapabilityGrant[]
   uploads    FileUpload[]

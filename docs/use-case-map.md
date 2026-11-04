@@ -1,7 +1,6 @@
 # Use Case → Module → หน้าจอ
 
-อ้างอิง revised UC01–UC11 เป็นหลัก ดูตำแหน่งเอกสารต้นฉบับใน [AGENTS.md](../AGENTS.md#sources-of-truth)
-ชื่อ Module ไม่ได้เปลี่ยนชื่อ Entity ใน ER และเส้นทางด้านล่างเป็นแผน Routing ยังไม่มี pages ที่ทำงานจริง
+อ้างอิง revised UC01–UC11 และ UC-12 จากรายงาน SA - Full doc.docx ดูตำแหน่งเอกสารต้นฉบับใน [AGENTS.md](../AGENTS.md#sources-of-truth)
 
 | Use Case | Module หลัก | หน้าจอ Figma | พื้นที่ Route |
 |---|---|---|---|
@@ -16,13 +15,14 @@
 | UC-09 ตรวจสุขภาพและใบรับรอง | `medical` | W05, W06, W06S | `/worker/medical` |
 | UC-10 รับ Work Permit | `work-permits` | W07, W08, W09 | `/worker/work-permit` |
 | UC-11 การยื่น ผล และจัดเก็บ Visa | `visa` | E07–E10 | `/employer/visa` |
+| UC-12 เข้าสู่ระบบลูกจ้าง | `auth` | S01W | `/login` |
 
 `documents` เป็น Module ร่วมสำหรับไฟล์ เจ้าของไฟล์ ชุดเอกสาร และ DocumentReceipt
 กฎเปิดรับ Visa/Work Permit อยู่ใน Module ธุรกิจที่เกี่ยวข้อง และใช้ `documents` จัดเก็บ/ตรวจสิทธิ์ไฟล์ตามเจ้าของที่เชื่อถือได้
 
 ## หน้าจอประกอบ
 
-- `/login`: S01/S01W; Authentication เป็น Supporting Flow ไม่เพิ่มเลข UC ธุรกิจ
+- `/login`: S01 สำหรับนายจ้าง ส่วน S01W ครอบคลุม UC-12 ของลูกจ้าง
 - `/worker`: W01 ภาพรวมของตนเอง อ่านสถานะจาก Modules ที่เกี่ยวข้อง
 - S02: ไม่มีสิทธิ์; S03/S03S/S04: ดู/ดาวน์โหลดและผลลัพธ์; S05: ข้อความบันทึกสำเร็จ
 - W10/W10S: แจ้งข้อมูลไม่ตรง ให้เข้าจากบริบท Visa, Travel หรือ Work Permit โดยไม่ถือเป็นการแก้เอกสารต้นฉบับ

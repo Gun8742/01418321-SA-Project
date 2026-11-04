@@ -78,6 +78,13 @@ describe("PostgreSQL and native authentication", () => {
       true,
     );
     expect(stored.token !== parsed?.session.token).toBe(true);
+    const loginAt = async () =>
+      (
+        await db.actorAccount.findUniqueOrThrow({
+          where: { userId: signed.principal.userId },
+        })
+      ).lastLoginAt;
+    expect(await loginAt()).toEqual(stored.createdAt);
     await db.session.update({
       where: { id: stored.id },
       data: { updatedAt: new Date(Date.now() - 3600000) },
@@ -90,9 +97,60 @@ describe("PostgreSQL and native authentication", () => {
       signed.principal.actor.accountId,
     );
     await authentication().api.signOut({ headers: signed.headers });
+    expect(await loginAt()).toEqual(stored.createdAt);
     await expect(resolvePrincipal(signed.headers)).rejects.toMatchObject({
       code: "UNAUTHENTICATED",
     });
+  });
+  it("does not create a session or update login time when eligibility fails", async () => {
+    const account = await db.actorAccount.findUniqueOrThrow({
+      where: { userId: arun.userId },
+    });
+    const before = await db.session.count({ where: { userId: arun.userId } });
+    async function assertDenied(password: string) {
+      const response = await authentication().api.signInUsername({
+        body: { username: "arun", password },
+        headers: new Headers({ origin: process.env.BETTER_AUTH_URL ?? "" }),
+        asResponse: true,
+      });
+      expect(response.status).toBe(401);
+      expect(response.headers.getSetCookie()).toHaveLength(0);
+      expect(await db.session.count({ where: { userId: arun.userId } })).toBe(
+        before,
+      );
+      expect(
+        (
+          await db.actorAccount.findUniqueOrThrow({
+            where: { id: account.id },
+          })
+        ).lastLoginAt,
+      ).toEqual(account.lastLoginAt);
+    }
+    await assertDenied("invalid-password");
+    try {
+      await db.actorAccount.update({
+        where: { id: account.id },
+        data: { active: false },
+      });
+      await assertDenied(process.env.SEED_PASSWORD ?? "");
+    } finally {
+      await db.actorAccount.update({
+        where: { id: account.id },
+        data: { active: true },
+      });
+    }
+    try {
+      await db.loginService.update({
+        where: { id: account.serviceId },
+        data: { active: false },
+      });
+      await assertDenied(process.env.SEED_PASSWORD ?? "");
+    } finally {
+      await db.loginService.update({
+        where: { id: account.serviceId },
+        data: { active: true },
+      });
+    }
   });
   it("never trusts Actor or scope supplied by another account", async () => {
     expect((await snapshot(other)).data.employments).toHaveLength(0);
